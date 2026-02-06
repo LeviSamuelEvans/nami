@@ -1,3 +1,10 @@
+"""Protocol definitions for flow-based generative models.
+
+This module defines abstract interfaces (Protocols) for key components
+in flow matching and diffusion models, including divergence estimators,
+probability paths, noise schedules, and ODE/SDE solvers.
+"""
+
 from __future__ import annotations
 
 from typing import Protocol
@@ -6,7 +13,27 @@ import torch
 
 
 class DivergenceEstimator(Protocol):
-    """ Interface for computing divergence of velocity field in log-likelihood calc. via change of variables.
+    """Interface for computing divergence of velocity field.
+    
+    Used in log-likelihood calculations via change of variables formula.
+    Implementations include exact Jacobian computation and Hutchinson's
+    trace estimator.
+    
+    Parameters
+    ----------
+    field : callable
+        Velocity field function.
+    x : Tensor
+        State tensor.
+    t : Tensor
+        Time values.
+    c : Tensor, optional
+        Conditioning context.
+    
+    Returns
+    -------
+    Tensor
+        Divergence of the velocity field at (x, t, c).
     """
     def __call__(
         self, field, x: torch.Tensor, t: torch.Tensor, c: torch.Tensor | None
@@ -14,12 +41,22 @@ class DivergenceEstimator(Protocol):
 
 
 class ProbabilityPath(Protocol):
-    """ Interface for interpolation paths in the fm models
+    """Interface for interpolation paths in flow matching models.
+    
+    Defines the continuous interpolation between source and target
+    distributions, parameterized by time t ∈ [0, 1].
 
-    Methods:
-    ---
-    - `sample_xt`: given data, noise and time, return the interpolated point along the path
-    - `target_ut`: ground truth velocity field used in the loss
+    Methods
+    -------
+    sample_xt(x_target, x_source, t)
+        Sample interpolated point along the path at time *t*.
+    target_ut(x_target, x_source, t)
+        Compute ground truth velocity field used in the loss.
+    
+    Notes
+    -----
+    Common implementations include linear interpolation and
+    geodesic paths on manifolds.
     """
     def sample_xt(
         self, x_target: torch.Tensor, x_source: torch.Tensor, t: torch.Tensor
@@ -31,16 +68,27 @@ class ProbabilityPath(Protocol):
 
 
 class NoiseSchedule(Protocol):
-    """ Interface for diffusion model noise schedules with forward process 
-    x_t = alpha(t)*x_0 + sigma(t) * epsilon
+    """Interface for diffusion model noise schedules.
+    
+    Defines the forward process: x_t = α(t) * x_0 + σ(t) * ε,
+    where ε ~ N(0, I).
 
-    Methods:
-    ---
-    - `alpha(t)`: signal scaling coeff. at time t
-    - `sigma(t)`: noise scaling coeff. at time t
-    - `snr`: signal-to-noise ratio (alpha^2/sigma^2)
-    - `drift(x,t)`: term in SDE dx = f(x,t)dt + g(t) dW  
-    - `diffusion`: the diffusion coeff. g(t)
+    Methods
+    -------
+    alpha(t)
+        Signal scaling coefficient at time *t*.
+    sigma(t)
+        Noise scaling coefficient at time *t*.
+    snr(t)
+        Signal-to-noise ratio: α²(t) / σ²(t).
+    drift(x, t)
+        Drift term in SDE: dx = f(x,t)dt + g(t)dW.
+    diffusion(t)
+        Diffusion coefficient g(t) in the SDE.
+    
+    Notes
+    -----
+    Common schedules include linear, cosine, and variance-preserving schedules.
     """
     def alpha(self, t: torch.Tensor) -> torch.Tensor: ...
 
@@ -56,10 +104,30 @@ class NoiseSchedule(Protocol):
 class ODESolver(Protocol):
     """Interface for ODE integrators.
     
-    Methods:
-    ----
-    - `integrate`: solve dx/dt = f(x,t) from t0 to t1 given initial state x0
-    - `integrate_augmented`: jointly solve for state and the log-prob change
+    Solves ordinary differential equations dx/dt = f(x, t) for flow-based
+    generative models, with optional augmented integration for log-likelihood.
+
+    Attributes
+    ----------
+    requires_steps : bool
+        Whether solver requires a fixed number of steps.
+    supports_rsample : bool
+        Whether solver supports reparameterized sampling (gradients flow
+        through the sampling process).
+    is_sde : bool
+        Should be *False* for ODE solvers.
+    
+    Methods
+    -------
+    integrate(f, x0, t0, t1, atol, rtol, steps)
+        Solve dx/dt = f(x,t) from *t0* to *t1* given initial state *x0*.
+    integrate_augmented(f_aug, x0, logp0, t0, t1, atol, rtol, steps)
+        Jointly solve for state and log-probability change.
+    
+    Notes
+    -----
+    Common implementations include Euler, Heun, and Runge-Kutta methods,
+    as well as adaptive solvers like Dopri5.
     """
     
     # does the solver require a fixed number of step counts to be specified?
@@ -97,10 +165,25 @@ class ODESolver(Protocol):
 
 
 class SDESolver(Protocol):
-    """ Interface for SDE integrators.
+    """Interface for SDE integrators.
     
-    Methods:
-    - `integrate`
+    Solves stochastic differential equations dx = f(x,t)dt + g(t)dW
+    for diffusion-based generative models.
+
+    Attributes
+    ----------
+    is_sde : bool
+        Should be *True* for SDE solvers.
+    
+    Methods
+    -------
+    integrate(drift, diffusion, x0, t0, t1, steps)
+        Integrate SDE from *t0* to *t1* with *steps* discrete steps.
+    
+    Notes
+    -----
+    Common implementations include Euler-Maruyama and other
+    stochastic integrators for diffusion models.
     """
     is_sde: bool  # should be True for SDE solvers
 

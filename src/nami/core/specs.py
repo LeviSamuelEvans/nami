@@ -1,3 +1,9 @@
+"""Tensor specification and shape manipulation utilities.
+
+This module provides utilities for working with tensor shapes in generative models,
+including splitting, flattening, and validating event and batch dimensions.
+"""
+
 from __future__ import annotations
 
 import math
@@ -8,7 +14,27 @@ import torch
 
 
 def as_tuple(x: Iterable[int] | int | None) -> tuple[int, ...]:
-    """normaliser to take flexible input and return always a tuple for convenience.
+    """Normalize flexible input to a tuple of integers.
+    
+    Parameters
+    ----------
+    x : Iterable[int], int, or None
+        Value to convert. Can be *None*, a single integer, a tuple,
+        or a list of integers.
+    
+    Returns
+    -------
+    tuple of int
+        Empty tuple if *x* is *None*, otherwise a tuple of integers.
+    
+    Examples
+    --------
+    >>> as_tuple(None)
+    ()
+    >>> as_tuple(5)
+    (5,)
+    >>> as_tuple([2, 3, 4])
+    (2, 3, 4)
     """
     if x is None:
         return ()
@@ -20,7 +46,24 @@ def as_tuple(x: Iterable[int] | int | None) -> tuple[int, ...]:
 
 
 def event_numel(event_shape: Iterable[int] | None) -> int:
-    """ returns the total number of elements in the event shape
+    """Compute the total number of elements in an event shape.
+    
+    Parameters
+    ----------
+    event_shape : Iterable[int] or None
+        Shape of the event dimensions. If *None* or empty, returns 1.
+    
+    Returns
+    -------
+    int
+        Product of all dimensions in *event_shape*, or 1 if empty.
+    
+    Examples
+    --------
+    >>> event_numel(None)
+    1
+    >>> event_numel((2, 3, 4))
+    24
     """
     shape = as_tuple(event_shape)
     if not shape:
@@ -31,7 +74,35 @@ def event_numel(event_shape: Iterable[int] | None) -> int:
 def split_event(
     x: torch.Tensor, event_ndim: int
 ) -> tuple[tuple[int, ...], tuple[int, ...]]:
-    """ given a tensor, return shape split into leading shape and event shape
+    """Split a tensor's shape into batch dimensions and event dimensions.
+    
+    Parameters
+    ----------
+    x : Tensor
+        Input tensor to split.
+    event_ndim : int
+        Number of trailing dimensions to treat as event dimensions.
+        Must be >= 0 and <= ``x.ndim``.
+    
+    Returns
+    -------
+    batch_shape : tuple of int
+        Leading (batch) dimensions of *x*.
+    event_shape : tuple of int
+        Trailing (event) dimensions of *x*.
+    
+    Raises
+    ------
+    ValueError
+        If *event_ndim* is negative or exceeds ``x.ndim``.
+    
+    Examples
+    --------
+    >>> x = torch.randn(2, 3, 4, 5)
+    >>> split_event(x, 2)
+    ((2, 3), (4, 5))
+    >>> split_event(x, 0)
+    ((2, 3, 4, 5), ())
     """
     if event_ndim < 0:
         raise ValueError("event_ndim must be >= 0")
@@ -43,7 +114,36 @@ def split_event(
 
 
 def flatten_event(x: torch.Tensor, event_ndim: int) -> torch.Tensor:
-    """ collapse all event dimensions into a single flat dimension
+    """Collapse all event dimensions into a single flat dimension.
+    
+    Parameters
+    ----------
+    x : Tensor
+        Input tensor with shape ``batch + event_shape``.
+    event_ndim : int
+        Number of trailing dimensions to flatten.
+        Must be >= 0 and <= ``x.ndim``.
+    
+    Returns
+    -------
+    Tensor
+        Tensor with shape ``batch + (prod(event_shape),)``.
+        If *event_ndim* is 0, returns *x* unchanged.
+    
+    Raises
+    ------
+    ValueError
+        If *event_ndim* is negative or exceeds ``x.ndim``.
+    
+    See Also
+    --------
+    unflatten_event : Inverse operation.
+    
+    Examples
+    --------
+    >>> x = torch.randn(2, 3, 4, 5)
+    >>> flatten_event(x, 2).shape
+    torch.Size([2, 3, 20])
     """
     if event_ndim < 0:
         raise ValueError("event_ndim must be >= 0")
@@ -55,7 +155,32 @@ def flatten_event(x: torch.Tensor, event_ndim: int) -> torch.Tensor:
 
 
 def unflatten_event(x: torch.Tensor, event_shape: tuple[int, ...]) -> torch.Tensor:
-    """ inverse of `flatten_event`
+    """Restore flattened event dimensions to their original shape.
+    
+    Inverse operation of :func:`flatten_event`.
+    
+    Parameters
+    ----------
+    x : Tensor
+        Input tensor with shape ``batch + (flat_dim,)``.
+    event_shape : tuple of int
+        Target event shape. Product must equal the last dimension of *x*.
+    
+    Returns
+    -------
+    Tensor
+        Tensor with shape ``batch + event_shape``.
+        If *event_shape* is empty, returns *x* unchanged.
+    
+    See Also
+    --------
+    flatten_event : Inverse operation.
+    
+    Examples
+    --------
+    >>> x = torch.randn(2, 3, 20)
+    >>> unflatten_event(x, (4, 5)).shape
+    torch.Size([2, 3, 4, 5])
     """
     if not event_shape:
         return x
@@ -68,8 +193,35 @@ def validate_shapes(
     expected_event_shape: tuple[int, ...] | None = None,
     batch_shape: tuple[int, ...] | None = None,
 ) -> None:
-    """ Runtime assertion helper to enforce explicit shapes and
-    prevent silent broadcasting 
+    """Validate tensor shape against expected event and batch dimensions.
+    
+    Runtime assertion helper to enforce explicit shapes and prevent
+    silent broadcasting errors.
+    
+    Parameters
+    ----------
+    tensor : Tensor
+        Tensor to validate.
+    event_ndim : int
+        Number of trailing dimensions to treat as event dimensions.
+        Must be >= 0 and <= ``tensor.ndim``.
+    expected_event_shape : tuple of int, optional
+        Expected shape of event dimensions. If provided, raises *ValueError*
+        if actual event shape does not match.
+    batch_shape : tuple of int, optional
+        Expected shape of batch dimensions. If provided, raises *ValueError*
+        if actual batch shape does not match.
+    
+    Raises
+    ------
+    ValueError
+        If *event_ndim* is invalid, or if shapes do not match expectations.
+    
+    Examples
+    --------
+    >>> x = torch.randn(2, 3, 4, 5)
+    >>> validate_shapes(x, event_ndim=2, expected_event_shape=(4, 5))
+    >>> validate_shapes(x, event_ndim=2, batch_shape=(2, 3))
     """
     if event_ndim < 0:
         raise ValueError("event_ndim must be >= 0")
@@ -95,11 +247,36 @@ def validate_shapes(
 
 @dataclass(frozen=True)
 class TensorSpec:
-    """minimal specification of tensor for models, samplers, and distribution components.
+    """Minimal specification of tensor properties for models and distributions.
+    
+    Defines the expected shape and data type for tensors in flow-based
+    generative models, enabling shape inference and validation.
 
-    Attributes:
-        event_shape (tuple[int, ...]): The shape of a single event (sample, vector, matrix, etc).
-        dtype (torch.dtype | None): The expected data type of the tensor.
+    Parameters
+    ----------
+    event_shape : tuple of int
+        The shape of a single event (sample, vector, matrix, etc).
+    dtype : torch.dtype, optional
+        The expected data type of the tensor.
+
+    Attributes
+    ----------
+    event_shape : tuple of int
+        Shape of a single event.
+    dtype : torch.dtype or None
+        Expected data type.
+    event_ndim : int
+        Number of dimensions in the event shape (read-only property).
+    numel : int
+        Total number of elements in the event shape (read-only property).
+    
+    Examples
+    --------
+    >>> spec = TensorSpec(event_shape=(3, 64, 64), dtype=torch.float32)
+    >>> spec.event_ndim
+    3
+    >>> spec.numel
+    12288
     """
     event_shape: tuple[int, ...]
     dtype: torch.dtype | None = None

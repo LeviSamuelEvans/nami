@@ -1,3 +1,9 @@
+"""Tensor broadcasting utilities for generative models.
+
+This module provides utilities to broadcast data, time, and context tensors
+to compatible shapes while preserving event and context dimensions.
+"""
+
 from __future__ import annotations
 
 import torch
@@ -13,6 +19,41 @@ def broadcast(
     event_ndim: int,
     validate_args: bool = True,
 ) -> tuple[torch.Tensor, torch.Tensor | None, torch.Tensor | None]:
+    """Broadcast data, time, and context tensors to compatible shapes.
+    
+    Expands tensors *x*, *t*, and *c* to have compatible batch dimensions, 
+    preserving the event dimensions of *x* and the context dimension of *c*.
+    
+    Parameters
+    ----------
+    x : Tensor
+        Data tensor with shape ``batch + event_shape``.
+    t : Tensor, optional
+        Time values with shape broadcastable to ``batch``.
+        If *None*, not broadcasted.
+    c : Tensor, optional
+        Context tensor with shape ``context_batch + (context_dim,)``.
+        If *None*, not broadcasted.
+    event_ndim : int
+        Number of trailing event dimensions in *x*.
+    validate_args : bool, default=True
+        If *True*, raises *ValueError* when broadcasting fails.
+    
+    Returns
+    -------
+    x : Tensor
+        Broadcasted data tensor.
+    t : Tensor or None
+        Broadcasted time tensor, or *None* if input was *None*.
+    c : Tensor or None
+        Broadcasted context tensor, or *None* if input was *None*.
+    
+    Raises
+    ------
+    ValueError
+        If *validate_args* is *True* and tensors cannot be broadcast together,
+        or if context tensor has less than 1 dimension.
+    """
     lead, event_shape = split_event(x, event_ndim)
     shapes: list[tuple[int, ...]] = [lead]
 
