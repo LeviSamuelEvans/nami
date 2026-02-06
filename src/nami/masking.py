@@ -1,0 +1,203 @@
+"""
+Mask convention
+---------------
+``1 = real object``, ``0 = padding``.  Masks have shape ``(..., N)`` where
+*N* is the object (first event) dimension.
+"""
+
+from __future__ import annotations
+
+import torch
+
+from .paths.linear import LinearPath
+
+
+def _expand_mask(
+    mask: torch.Tensor, x: torch.Tensor, event_ndim: int
+) -> torch.Tensor:
+    """Expand *mask* so it broadcasts with *x*.
+
+    Parameters
+    ----------
+    mask : Tensor
+        Binary mask, shape ``lead + (N,)``.
+    x : Tensor
+        Data tensor, shape ``(..., lead, N, D1, D2, ...)``.
+    event_ndim : int
+        Number of trailing event dimensions in *x* (must be >= 1).
+
+    Returns
+    -------
+    Tensor
+        Mask broadcastable with *x*, shape ``(..., lead, N, 1, 1, ...)``.
+    """
+    n_prepend = x.ndim - mask.ndim - (event_ndim - 1)
+    m = mask
+    for _ in range(n_prepend):
+        m = m.unsqueeze(0)
+    m = m.expand(x.shape[: x.ndim - event_ndim + 1])
+    for _ in range(event_ndim - 1):
+        m = m.unsqueeze(-1)
+    return m
+
+
+def masked_fm_loss(
+    field,
+    x_target: torch.Tensor,
+    x_source: torch.Tensor,
+    mask: torch.Tensor,
+    t: torch.Tensor | None = None,
+    c: torch.Tensor | None = None,
+    *,
+    path=None,
+    reduction: str = "mean",
+) -> torch.Tensor:
+    """Flow matching loss computed only over real (unmasked) objects.
+
+    Like :func:`~nami.losses.fm.fm_loss` but padded objects — positions where
+    ``mask == 0`` — are excluded from the loss.
+
+    Parameters
+    ----------
+    field : nn.Module
+        Velocity field.  Must expose an ``event_ndim`` attribute >= 2.
+    x_target, x_source : Tensor
+        Target and source tensors, each ``lead + event_shape``.
+    mask : Tensor
+        Binary mask, ``lead + (N,)`` where *N* is the first event dim.
+        ``1 = real``, ``0 = padding``.
+    t : Tensor, optional
+        Per-sample time values (``lead``).  Uniform random if *None*.
+    c : Tensor, optional
+        Conditioning context forwarded to the field.
+    path : ProbabilityPath, optional
+        Defaults to :class:`~nami.paths.linear.LinearPath`.
+    reduction : ``'mean'`` | ``'sum'`` | ``'none'``
+
+    Returns
+    -------
+    Tensor
+        Scalar loss, or per-sample losses when ``reduction='none'``.
+    """
+    event_ndim = getattr(field, "event_ndim", None)
+    if event_ndim is None:
+        raise ValueError("field.event_ndim is required")
+    if event_ndim < 2:
+        raise ValueError(
+            "masked_fm_loss requires event_ndim >= 2 (objects x features)"
+        )
+
+    if path is None:
+        path = LinearPath()
+
+    lead = x_target.shape[:-event_ndim]
+
+    if t is None:
+        dtype = x_target.dtype if x_target.dtype.is_floating_point else torch.float32
+        t = torch.rand(lead, device=x_target.device, dtype=dtype)
+    elif t.shape != lead:
+        t = t.expand(lead)
+
+    xt = path.sample_xt(x_target, x_source, t)
+    ut = path.target_ut(x_target, x_source, t)
+    vt = field(xt, t, c)
+
+    sq_err = (vt - ut).pow(2)  # lead + event_shape
+
+    mask_f = mask.float()
+    mask_exp = _expand_mask(mask_f, sq_err, event_ndim)  # lead + (N, 1, ...)
+    sq_err = sq_err * mask_exp
+
+    # Per-object MSE: collapse feature dims -> lead + (N,)
+    n_objects = sq_err.shape[len(lead)]
+    sq_err_flat = sq_err.reshape(*lead, n_objects, -1)
+    per_object = sq_err_flat.mean(dim=-1)
+
+    # Average over real objects only
+    n_real = mask_f.sum(dim=-1).clamp(min=1)
+    mse = per_object.sum(dim=-1) / n_real
+
+    if reduction == "none":
+        return mse
+    if reduction == "sum":
+        return mse.sum()
+    if reduction == "mean":
+        return mse.mean()
+    raise ValueError("reduction must be 'mean', 'sum', or 'none'")
+
+
+def masked_sample(
+    field,
+    base,
+    solver,
+    mask: torch.Tensor,
+    *,
+    sample_shape: tuple[int, ...] = (),
+    c: torch.Tensor | None = None,
+    t0: float = 1.0,
+    t1: float = 0.0,
+) -> torch.Tensor:
+    """Sample from a flow matching model with variable-cardinality masking.
+
+    1. Draws noise from *base* and zeros padded positions.
+    2. At every solver step, masks the velocity output so padded positions
+       receive zero velocity and remain at zero throughout integration.
+
+    Parameters
+    ----------
+    field : nn.Module
+        Velocity field with ``forward(x, t, c)`` and ``event_ndim``.
+    base : Distribution
+        Base (source) distribution.
+    solver
+        ODE solver with ``integrate(f, x0, *, t0, t1, ...)``.
+    mask : Tensor
+        Binary mask ``(batch..., N)``.  ``1 = real``, ``0 = padding``.
+    sample_shape : tuple of int
+        Independent sample dimensions prepended to the output.
+    c : Tensor, optional
+        Conditioning context forwarded to the field.
+    t0 : float
+        Integration start (default ``1.0``, noise end).
+    t1 : float
+        Integration end (default ``0.0``, data end).
+
+    Returns
+    -------
+    Tensor
+        Samples with shape ``sample_shape + batch + event_shape``.
+        Padded positions are exactly zero.
+    """
+    event_ndim = getattr(field, "event_ndim", None)
+    if event_ndim is None:
+        raise ValueError("field.event_ndim is required")
+
+    z = base.sample(sample_shape)
+    mask_f = mask.float()
+    mask_full = _expand_mask(mask_f, z, event_ndim)
+
+    # Zero noise at padded positions
+    z = z * mask_full
+
+    # Expand context to match sample dimensions
+    c_exp = c
+    if c_exp is not None:
+        lead_ndim = z.ndim - event_ndim
+        while c_exp.ndim < lead_ndim + 1:
+            c_exp = c_exp.unsqueeze(0)
+        lead_shape = z.shape[:lead_ndim]
+        c_exp = c_exp.expand(*lead_shape, c_exp.shape[-1])
+
+    def f(x, t):
+        tt = torch.as_tensor(t, device=x.device, dtype=x.dtype)
+        v = field(x, tt, c_exp)
+        return v * mask_full
+
+    kwargs = {}
+    if getattr(solver, "requires_steps", False):
+        steps = getattr(solver, "steps", None)
+        if steps is None:
+            raise ValueError("solver requires steps")
+        kwargs["steps"] = steps
+
+    return solver.integrate(f, z, t0=t0, t1=t1, **kwargs)

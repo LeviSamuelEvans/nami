@@ -1,0 +1,7 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+books/
+.killa
+__pycache__
+.coverage

@@ -1,0 +1,40 @@
+from __future__ import annotations
+
+import torch
+
+from ..core.specs import event_numel, split_event
+from .base import DivergenceEstimator
+
+
+class ExactDivergence(DivergenceEstimator):
+    def __init__(self, max_dim: int = 16):
+        self.max_dim = int(max_dim)
+
+    def __call__(
+        self, field, x: torch.Tensor, t: torch.Tensor, c: torch.Tensor | None
+    ) -> torch.Tensor:
+        event_ndim = getattr(field, "event_ndim", None)
+        if event_ndim is None:
+            raise ValueError("field.event_ndim is required for divergence")
+        lead, event_shape = split_event(x, event_ndim)
+        numel = event_numel(event_shape)
+        if numel > self.max_dim:
+            raise ValueError("event_numel exceeds ExactDivergence.max_dim")
+
+        with torch.enable_grad():
+            # Clone to avoid mutating input tensor's grad state
+            x_req = x.detach().clone().requires_grad_(True)
+
+            # Field call must be inside enable_grad() to build computation graph
+            v = field(x_req, t, c)
+            v_flat = v.reshape(*lead, numel)
+            div = torch.zeros(lead, device=x.device, dtype=x.dtype)
+
+            for i in range(numel):
+                grad = torch.autograd.grad(
+                    v_flat[..., i].sum(), x_req, create_graph=False
+                )[0]
+                grad_flat = grad.reshape(*lead, numel)
+                div = div + grad_flat[..., i]
+
+        return div
