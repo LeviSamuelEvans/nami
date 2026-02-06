@@ -119,7 +119,7 @@ def flatten_event(x: torch.Tensor, event_ndim: int) -> torch.Tensor:
     Parameters
     ----------
     x : Tensor
-        Input tensor with shape ``batch + event_shape``.
+        Input tensor with shape ``(*batch_shape, *event_shape)``.
     event_ndim : int
         Number of trailing dimensions to flatten.
         Must be >= 0 and <= ``x.ndim``.
@@ -127,13 +127,13 @@ def flatten_event(x: torch.Tensor, event_ndim: int) -> torch.Tensor:
     Returns
     -------
     Tensor
-        Tensor with shape ``batch + (prod(event_shape),)``.
-        If *event_ndim* is 0, returns *x* unchanged.
+        Tensor with shape ``(*batch_shape, prod(event_shape))``.
+        If ``event_ndim`` is 0, returns ``x`` unchanged.
     
     Raises
     ------
     ValueError
-        If *event_ndim* is negative or exceeds ``x.ndim``.
+        If ``event_ndim`` is negative or exceeds ``x.ndim``.
     
     See Also
     --------
@@ -162,15 +162,15 @@ def unflatten_event(x: torch.Tensor, event_shape: tuple[int, ...]) -> torch.Tens
     Parameters
     ----------
     x : Tensor
-        Input tensor with shape ``batch + (flat_dim,)``.
+        Input tensor with shape ``(*batch_shape, flat_dim)``.
     event_shape : tuple of int
-        Target event shape. Product must equal the last dimension of *x*.
+        Target event shape. Product must equal the last dimension of ``x``.
     
     Returns
     -------
     Tensor
-        Tensor with shape ``batch + event_shape``.
-        If *event_shape* is empty, returns *x* unchanged.
+        Tensor with shape ``(*batch_shape, *event_shape)``.
+        If ``event_shape`` is empty, returns ``x`` unchanged.
     
     See Also
     --------

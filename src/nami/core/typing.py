@@ -49,7 +49,7 @@ class ProbabilityPath(Protocol):
     Methods
     -------
     sample_xt(x_target, x_source, t)
-        Sample interpolated point along the path at time *t*.
+        Sample interpolated point along the path at time ``t``.
     target_ut(x_target, x_source, t)
         Compute ground truth velocity field used in the loss.
     
@@ -76,9 +76,9 @@ class NoiseSchedule(Protocol):
     Methods
     -------
     alpha(t)
-        Signal scaling coefficient at time *t*.
+        Signal scaling coefficient at time ``t``.
     sigma(t)
-        Noise scaling coefficient at time *t*.
+        Noise scaling coefficient at time ``t``.
     snr(t)
         Signal-to-noise ratio: α²(t) / σ²(t).
     drift(x, t)
@@ -115,12 +115,12 @@ class ODESolver(Protocol):
         Whether solver supports reparameterized sampling (gradients flow
         through the sampling process).
     is_sde : bool
-        Should be *False* for ODE solvers.
+        Should be False for ODE solvers.
     
     Methods
     -------
     integrate(f, x0, t0, t1, atol, rtol, steps)
-        Solve dx/dt = f(x,t) from *t0* to *t1* given initial state *x0*.
+        Solve dx/dt = f(x,t) from ``t0`` to ``t1`` given initial state ``x0``.
     integrate_augmented(f_aug, x0, logp0, t0, t1, atol, rtol, steps)
         Jointly solve for state and log-probability change.
     
@@ -173,12 +173,12 @@ class SDESolver(Protocol):
     Attributes
     ----------
     is_sde : bool
-        Should be *True* for SDE solvers.
+        Should be True for SDE solvers.
     
     Methods
     -------
     integrate(drift, diffusion, x0, t0, t1, steps)
-        Integrate SDE from *t0* to *t1* with *steps* discrete steps.
+        Integrate SDE from ``t0`` to ``t1`` with ``steps`` discrete steps.
     
     Notes
     -----

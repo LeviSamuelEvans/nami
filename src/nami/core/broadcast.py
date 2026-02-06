@@ -27,31 +27,31 @@ def broadcast(
     Parameters
     ----------
     x : Tensor
-        Data tensor with shape ``batch + event_shape``.
+        Data tensor with shape ``(*batch_shape, *event_shape)``.
     t : Tensor, optional
-        Time values with shape broadcastable to ``batch``.
-        If *None*, not broadcasted.
+        Time values with shape broadcastable to ``batch_shape``.
+        If None, not broadcasted.
     c : Tensor, optional
-        Context tensor with shape ``context_batch + (context_dim,)``.
-        If *None*, not broadcasted.
+        Context tensor with shape ``(*context_batch, context_dim)``.
+        If None, not broadcasted.
     event_ndim : int
-        Number of trailing event dimensions in *x*.
+        Number of trailing event dimensions in ``x``.
     validate_args : bool, default=True
-        If *True*, raises *ValueError* when broadcasting fails.
+        If True, raises ValueError when broadcasting fails.
     
     Returns
     -------
     x : Tensor
         Broadcasted data tensor.
     t : Tensor or None
-        Broadcasted time tensor, or *None* if input was *None*.
+        Broadcasted time tensor, or None if input was None.
     c : Tensor or None
-        Broadcasted context tensor, or *None* if input was *None*.
+        Broadcasted context tensor, or None if input was None.
     
     Raises
     ------
     ValueError
-        If *validate_args* is *True* and tensors cannot be broadcast together,
+        If ``validate_args`` is True and tensors cannot be broadcast together,
         or if context tensor has less than 1 dimension.
     """
     lead, event_shape = split_event(x, event_ndim)
