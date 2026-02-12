@@ -5,7 +5,6 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 A minimal, modular flow matching library for research studies, providing the building blocks for flow-based generative models with explicit shape semantics and pluggable components. Primarily, this is a personal tool for use in other projects (and for fun). Much of the design is heavily inspired by the fantastic [Zuko](https://github.com/probabilists/zuko/tree/master) library, who coined the term `LazyDistribution`.
-![nami](docs/assets/nami.svg)
 
 ## Installation
 
