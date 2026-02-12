@@ -103,7 +103,9 @@ class TestHeunIntegrateAugmented:
         logp0 = torch.randn(3)
 
         heun = Heun(steps=10)
-        x1, logp1 = heun.integrate_augmented(f_aug, sample_tensor_2d, logp0, t0=0.0, t1=1.0)
+        x1, logp1 = heun.integrate_augmented(
+            f_aug, sample_tensor_2d, logp0, t0=0.0, t1=1.0
+        )
 
         assert torch.allclose(x1, sample_tensor_2d)
         assert torch.allclose(logp1, logp0)
@@ -119,7 +121,9 @@ class TestHeunIntegrateAugmented:
         logp0 = torch.zeros(3)
 
         heun = Heun(steps=10)
-        x1, logp1 = heun.integrate_augmented(f_aug, sample_tensor_2d, logp0, t0=0.0, t1=1.0)
+        x1, logp1 = heun.integrate_augmented(
+            f_aug, sample_tensor_2d, logp0, t0=0.0, t1=1.0
+        )
 
         expected_x = torch.exp(torch.tensor(-1.0)) * sample_tensor_2d
         expected_logp = -1.0 * torch.ones(3)

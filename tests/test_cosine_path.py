@@ -5,6 +5,7 @@ import math
 import pytest
 import torch
 
+
 class TestCosinePathSampleXt:
     """Tests for CosinePath.sample_xt method."""
 
@@ -91,7 +92,9 @@ class TestCosinePathInternals:
         ],
         ids=["t0", "t_mid", "t1"],
     )
-    def test_alpha_sigma_values(self, cosine_path, t_val, expected_alpha, expected_sigma):
+    def test_alpha_sigma_values(
+        self, cosine_path, t_val, expected_alpha, expected_sigma
+    ):
         """Test alpha and sigma at key time points."""
         t = torch.tensor([t_val])
 

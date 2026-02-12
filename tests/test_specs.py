@@ -150,7 +150,9 @@ def test_flatten_unflatten_roundtrip(sample_tensor_4d):
     ],
     ids=["full", "ndim0", "no_batch", "no_event", "minimal"],
 )
-def test_validate_shapes(sample_tensor_4d, event_ndim, expected_event_shape, batch_shape):
+def test_validate_shapes(
+    sample_tensor_4d, event_ndim, expected_event_shape, batch_shape
+):
     validate_shapes(
         sample_tensor_4d,
         event_ndim=event_ndim,
