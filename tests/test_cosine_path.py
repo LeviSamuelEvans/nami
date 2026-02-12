@@ -84,7 +84,7 @@ class TestCosinePathInternals:
     """Tests for CosinePath internal methods."""
 
     @pytest.mark.parametrize(
-        "t_val,expected_alpha,expected_sigma",
+        ("t_val", "expected_alpha", "expected_sigma"),
         [
             (0.0, 1.0, 0.0),
             (0.5, math.cos(math.pi / 4), math.sin(math.pi / 4)),

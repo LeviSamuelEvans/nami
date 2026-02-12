@@ -13,12 +13,11 @@ from nami.core.specs import (
     validate_shapes,
 )
 
-
 # as_tuple tests
 
 
 @pytest.mark.parametrize(
-    "input_val,expected",
+    ("input_val", "expected"),
     [
         (None, ()),
         (5, (5,)),
@@ -35,7 +34,7 @@ def test_as_tuple(input_val, expected):
 
 
 @pytest.mark.parametrize(
-    "shape,expected",
+    ("shape", "expected"),
     [
         (None, 1),
         ((), 1),
@@ -53,7 +52,7 @@ def test_event_numel(shape, expected):
 
 
 @pytest.mark.parametrize(
-    "event_ndim,expected_lead,expected_event",
+    ("event_ndim", "expected_lead", "expected_event"),
     [
         (2, (2, 3), (4, 5)),
         (0, (2, 3, 4, 5), ()),
@@ -69,7 +68,7 @@ def test_split_event(sample_tensor_4d, event_ndim, expected_lead, expected_event
 
 
 @pytest.mark.parametrize(
-    "event_ndim,match",
+    ("event_ndim", "match"),
     [
         (-1, "event_ndim must be >= 0"),
         (10, "event_ndim exceeds x.ndim"),
@@ -85,7 +84,7 @@ def test_split_event_errors(sample_tensor_4d, event_ndim, match):
 
 
 @pytest.mark.parametrize(
-    "event_ndim,expected_shape",
+    ("event_ndim", "expected_shape"),
     [
         (2, (2, 3, 20)),
         (0, (2, 3, 4, 5)),
@@ -100,7 +99,7 @@ def test_flatten_event(sample_tensor_4d, event_ndim, expected_shape):
 
 
 @pytest.mark.parametrize(
-    "event_ndim,match",
+    ("event_ndim", "match"),
     [
         (-1, "event_ndim must be >= 0"),
         (10, "event_ndim exceeds x.ndim"),
@@ -116,7 +115,7 @@ def test_flatten_event_errors(sample_tensor_4d, event_ndim, match):
 
 
 @pytest.mark.parametrize(
-    "event_shape,expected_shape",
+    ("event_shape", "expected_shape"),
     [
         ((4, 5), (2, 3, 4, 5)),
         ((), (2, 3, 20)),
@@ -140,7 +139,7 @@ def test_flatten_unflatten_roundtrip(sample_tensor_4d):
 
 
 @pytest.mark.parametrize(
-    "event_ndim,expected_event_shape,batch_shape",
+    ("event_ndim", "expected_event_shape", "batch_shape"),
     [
         (2, (4, 5), (2, 3)),
         (0, (), (2, 3, 4, 5)),
@@ -172,7 +171,7 @@ def test_validate_shapes_batch_error(sample_tensor_4d):
 
 
 @pytest.mark.parametrize(
-    "event_ndim,match",
+    ("event_ndim", "match"),
     [
         (-1, "event_ndim must be >= 0"),
         (10, "event_ndim exceeds tensor.ndim"),

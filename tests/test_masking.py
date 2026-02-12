@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
-from nami.masking import _expand_mask, masked_fm_loss, masked_sample
-from nami.losses.fm import fm_loss
 from nami.distributions.normal import StandardNormal
+from nami.losses.fm import fm_loss
+from nami.masking import _expand_mask, masked_fm_loss, masked_sample
+from nami.paths.cosine import CosinePath
 from nami.solvers.ode import RK4
 
 
@@ -29,6 +30,7 @@ class SimpleSetField(nn.Module):
         return 2
 
     def forward(self, x, t, c=None):
+        _ = c
         flat = x.reshape(*x.shape[:-2], -1)
         t_exp = t.unsqueeze(-1).expand(*flat.shape[:-1], 1)
         out = self.net(torch.cat([flat, t_exp], dim=-1))
@@ -43,6 +45,7 @@ class ZeroField(nn.Module):
         return 2
 
     def forward(self, x, t, c=None):
+        _ = t, c
         return torch.zeros_like(x)
 
 
@@ -54,6 +57,7 @@ class ConstantDecayField(nn.Module):
         return 2
 
     def forward(self, x, t, c=None):
+        _ = t, c
         return -x
 
 
@@ -65,6 +69,7 @@ class Scalar1DField(nn.Module):
         return 1
 
     def forward(self, x, t, c=None):
+        _ = t, c
         return torch.zeros_like(x)
 
 
@@ -212,8 +217,6 @@ class TestMaskedFmLoss:
             masked_fm_loss(field, x, x, mask)
 
     def test_custom_path(self, setup):
-        from nami.paths.cosine import CosinePath
-
         field, x_target, x_source, mask = setup
         loss = masked_fm_loss(field, x_target, x_source, mask, path=CosinePath())
         assert loss.shape == ()

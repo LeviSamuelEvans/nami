@@ -27,14 +27,16 @@ class TestHeunIntegrate:
 
     def test_constant_field(self, sample_tensor_2d):
         """Zero velocity field should leave state unchanged."""
-        f = lambda x, t: torch.zeros_like(x)
+        def f(x, _t):
+            return torch.zeros_like(x)
         heun = Heun(steps=10)
         x1 = heun.integrate(f, sample_tensor_2d, t0=0.0, t1=1.0)
         assert torch.allclose(x1, sample_tensor_2d)
 
     def test_linear_decay(self):
         """Test dx/dt = -x, solution is x(t) = x0 * exp(-t)."""
-        f = lambda x, t: -x
+        def f(x, _t):
+            return -x
         x0 = torch.ones(5)
 
         heun = Heun(steps=100)
@@ -46,7 +48,7 @@ class TestHeunIntegrate:
     def test_oscillator(self):
         """Test simple harmonic oscillator returns to initial state after one period."""
 
-        def f(x, t):
+        def f(x, _t):
             v = x[..., 1:]
             dx_dt = -v
             dv_dt = x[..., :1]
@@ -61,7 +63,8 @@ class TestHeunIntegrate:
 
     def test_custom_steps_override(self, sample_tensor_2d):
         """Steps parameter in integrate should override default."""
-        f = lambda x, t: torch.zeros_like(x)
+        def f(x, _t):
+            return torch.zeros_like(x)
 
         heun = Heun(steps=5)
         x1 = heun.integrate(f, sample_tensor_2d, t0=0.0, t1=1.0, steps=10)
@@ -69,7 +72,7 @@ class TestHeunIntegrate:
         assert torch.allclose(x1, sample_tensor_2d)
 
     @pytest.mark.parametrize(
-        "steps,rtol",
+        ("steps", "rtol"),
         [
             (10, 5e-2),
             (100, 1e-2),
@@ -79,7 +82,8 @@ class TestHeunIntegrate:
     )
     def test_accuracy_vs_steps(self, steps, rtol):
         """More steps should give better accuracy for linear decay."""
-        f = lambda x, t: -x
+        def f(x, _t):
+            return -x
         x0 = torch.ones(5)
 
         heun = Heun(steps=steps)
@@ -95,7 +99,7 @@ class TestHeunIntegrateAugmented:
     def test_constant_augmented(self, sample_tensor_2d):
         """Zero velocity and divergence should leave state unchanged."""
 
-        def f_aug(x, t):
+        def f_aug(x, _t):
             v = torch.zeros_like(x)
             div = torch.zeros_like(x[..., 0])
             return v, div
@@ -113,7 +117,7 @@ class TestHeunIntegrateAugmented:
     def test_linear_augmented(self, sample_tensor_2d):
         """Test augmented integration with linear decay and constant divergence."""
 
-        def f_aug(x, t):
+        def f_aug(x, _t):
             v = -x
             div = -torch.ones_like(x[..., 0])
             return v, div
