@@ -2,6 +2,7 @@ from .base import VectorField
 import torch
 from torch import nn
 
+
 class VelocityField(VectorField):  # inherit from VectorField instead of nn.Module
     def __init__(self, dim: int, hidden: int = 256):
         super().__init__()

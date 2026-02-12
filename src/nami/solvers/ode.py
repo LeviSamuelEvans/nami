@@ -20,8 +20,8 @@ class RK4:
         *,
         t0: float,
         t1: float,
-        atol: float = 1e-6, # unused
-        rtol: float = 1e-5, # unused
+        atol: float = 1e-6,  # unused
+        rtol: float = 1e-5,  # unused
         steps: int | None = None,
     ) -> torch.Tensor:
         steps = int(steps or self.steps)
@@ -49,8 +49,8 @@ class RK4:
         *,
         t0: float,
         t1: float,
-        atol: float = 1e-6, # unused
-        rtol: float = 1e-5, # unused
+        atol: float = 1e-6,  # unused
+        rtol: float = 1e-5,  # unused
         steps: int | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         steps = int(steps or self.steps)

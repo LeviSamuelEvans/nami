@@ -12,9 +12,7 @@ import torch
 from .paths.linear import LinearPath
 
 
-def _expand_mask(
-    mask: torch.Tensor, x: torch.Tensor, event_ndim: int
-) -> torch.Tensor:
+def _expand_mask(mask: torch.Tensor, x: torch.Tensor, event_ndim: int) -> torch.Tensor:
     """Expand *mask* so it broadcasts with *x*.
 
     Parameters
@@ -83,9 +81,7 @@ def masked_fm_loss(
     if event_ndim is None:
         raise ValueError("field.event_ndim is required")
     if event_ndim < 2:
-        raise ValueError(
-            "masked_fm_loss requires event_ndim >= 2 (objects x features)"
-        )
+        raise ValueError("masked_fm_loss requires event_ndim >= 2 (objects x features)")
 
     if path is None:
         path = LinearPath()

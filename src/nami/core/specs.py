@@ -8,8 +8,7 @@ import torch
 
 
 def as_tuple(x: Iterable[int] | int | None) -> tuple[int, ...]:
-    """normaliser to take flexible input and return always a tuple for convenience.
-    """
+    """normaliser to take flexible input and return always a tuple for convenience."""
     if x is None:
         return ()
     if isinstance(x, tuple):
@@ -20,8 +19,7 @@ def as_tuple(x: Iterable[int] | int | None) -> tuple[int, ...]:
 
 
 def event_numel(event_shape: Iterable[int] | None) -> int:
-    """ returns the total number of elements in the event shape
-    """
+    """returns the total number of elements in the event shape"""
     shape = as_tuple(event_shape)
     if not shape:
         return 1
@@ -31,8 +29,7 @@ def event_numel(event_shape: Iterable[int] | None) -> int:
 def split_event(
     x: torch.Tensor, event_ndim: int
 ) -> tuple[tuple[int, ...], tuple[int, ...]]:
-    """ given a tensor, return shape split into leading shape and event shape
-    """
+    """given a tensor, return shape split into leading shape and event shape"""
     if event_ndim < 0:
         raise ValueError("event_ndim must be >= 0")
     if event_ndim > x.ndim:
@@ -43,8 +40,7 @@ def split_event(
 
 
 def flatten_event(x: torch.Tensor, event_ndim: int) -> torch.Tensor:
-    """ collapse all event dimensions into a single flat dimension
-    """
+    """collapse all event dimensions into a single flat dimension"""
     if event_ndim < 0:
         raise ValueError("event_ndim must be >= 0")
     if event_ndim > x.ndim:
@@ -55,8 +51,7 @@ def flatten_event(x: torch.Tensor, event_ndim: int) -> torch.Tensor:
 
 
 def unflatten_event(x: torch.Tensor, event_shape: tuple[int, ...]) -> torch.Tensor:
-    """ inverse of `flatten_event`
-    """
+    """inverse of `flatten_event`"""
     if not event_shape:
         return x
     return x.reshape(*x.shape[:-1], *event_shape)
@@ -68,8 +63,8 @@ def validate_shapes(
     expected_event_shape: tuple[int, ...] | None = None,
     batch_shape: tuple[int, ...] | None = None,
 ) -> None:
-    """ Runtime assertion helper to enforce explicit shapes and
-    prevent silent broadcasting 
+    """Runtime assertion helper to enforce explicit shapes and
+    prevent silent broadcasting
     """
     if event_ndim < 0:
         raise ValueError("event_ndim must be >= 0")
@@ -101,6 +96,7 @@ class TensorSpec:
         event_shape (tuple[int, ...]): The shape of a single event (sample, vector, matrix, etc).
         dtype (torch.dtype | None): The expected data type of the tensor.
     """
+
     event_shape: tuple[int, ...]
     dtype: torch.dtype | None = None
 
