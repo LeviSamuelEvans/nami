@@ -1,0 +1,106 @@
+from __future__ import annotations
+
+import pytest
+import torch
+from torch import nn
+
+from nami.interpolants.gamma import BrownianGamma, ZeroGamma
+from nami.losses.fm import fm_loss
+from nami.losses.stochastic_fm import stochastic_fm_loss
+from nami.paths.linear import LinearPath
+
+
+class ZeroField(nn.Module):
+    @property
+    def event_ndim(self) -> int:
+        return 1
+
+    def forward(self, x, t, c=None):
+        _ = t, c
+        return torch.zeros_like(x)
+
+
+class TestStochasticFmLoss:
+    def test_zero_gamma_matches_fm_loss(self):
+        torch.manual_seed(0)
+        field = ZeroField()
+        x_target = torch.randn(6, 4)
+        x_source = torch.randn(6, 4)
+        t = torch.rand(6)
+        z = torch.randn_like(x_target)
+        path = LinearPath()
+
+        deterministic = fm_loss(
+            field, x_target, x_source, t=t, path=path, reduction="none"
+        )
+        stochastic = stochastic_fm_loss(
+            field,
+            x_target,
+            x_source,
+            t=t,
+            path=path,
+            gamma=ZeroGamma(),
+            z=z,
+            reduction="none",
+        )
+
+        assert torch.allclose(stochastic, deterministic, rtol=1e-6, atol=1e-6)
+
+    def test_reductions(self):
+        torch.manual_seed(0)
+        field = ZeroField()
+        x_target = torch.randn(5, 3)
+        x_source = torch.randn(5, 3)
+        t = torch.rand(5)
+        z = torch.randn_like(x_target)
+
+        loss_none = stochastic_fm_loss(
+            field,
+            x_target,
+            x_source,
+            t=t,
+            gamma=BrownianGamma(),
+            z=z,
+            reduction="none",
+        )
+        loss_sum = stochastic_fm_loss(
+            field,
+            x_target,
+            x_source,
+            t=t,
+            gamma=BrownianGamma(),
+            z=z,
+            reduction="sum",
+        )
+        loss_mean = stochastic_fm_loss(
+            field,
+            x_target,
+            x_source,
+            t=t,
+            gamma=BrownianGamma(),
+            z=z,
+            reduction="mean",
+        )
+
+        assert loss_none.shape == (5,)
+        assert loss_sum.shape == ()
+        assert loss_mean.shape == ()
+        assert torch.isclose(loss_sum, loss_none.sum())
+        assert torch.isclose(loss_mean, loss_none.mean())
+
+    def test_invalid_noise_shape_raises(self):
+        field = ZeroField()
+        x_target = torch.randn(4, 3)
+        x_source = torch.randn(4, 3)
+        t = torch.rand(4)
+        z = torch.randn(4, 2)
+
+        with pytest.raises(ValueError, match="z must match the shape"):
+            stochastic_fm_loss(
+                field,
+                x_target,
+                x_source,
+                t=t,
+                gamma=BrownianGamma(),
+                z=z,
+            )
