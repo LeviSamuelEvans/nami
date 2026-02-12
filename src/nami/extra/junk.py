@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class FiLMConditionalField(nn.Module):
@@ -34,6 +36,5 @@ class FiLMConditionalField(nn.Module):
         # film modulation
         film_params = self.cond_net(c)
         scale, shift = torch.chunk(film_params, 2, dim=-1)
-        h = scale * h + shift
+        return scale * h + shift
 
-        return h

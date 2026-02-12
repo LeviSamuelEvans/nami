@@ -15,11 +15,13 @@ class ExactDivergence(DivergenceEstimator):
     ) -> torch.Tensor:
         event_ndim = getattr(field, "event_ndim", None)
         if event_ndim is None:
-            raise ValueError("field.event_ndim is required for divergence")
+            msg = "field.event_ndim is required for divergence"
+            raise ValueError(msg)
         lead, event_shape = split_event(x, event_ndim)
         numel = event_numel(event_shape)
         if numel > self.max_dim:
-            raise ValueError("event_numel exceeds ExactDivergence.max_dim")
+            msg = "event_numel exceeds ExactDivergence.max_dim"
+            raise ValueError(msg)
 
         with torch.enable_grad():
             # Clone to avoid mutating input tensor's grad state

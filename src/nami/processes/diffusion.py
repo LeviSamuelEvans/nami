@@ -50,7 +50,8 @@ class Diffusion(LazyDistribution):
 
         if base is None:
             if self.event_shape is None:
-                raise ValueError("event_shape is required when base is None")
+                msg = "event_shape is required when base is None"
+                raise ValueError(msg)
             device, dtype = _model_device_dtype(model)
             batch_shape = tuple(c.shape[:-1]) if c is not None else ()
             base = StandardNormal(
@@ -68,9 +69,11 @@ class Diffusion(LazyDistribution):
         event_ndim = getattr(model, "event_ndim", None)
         if self.validate_args:
             if self.parameterization not in {"eps", "score", "x0"}:
-                raise ValueError("parameterization must be 'eps', 'score', or 'x0'")
+                msg = "parameterization must be 'eps', 'score', or 'x0'"
+                raise ValueError(msg)
             if event_ndim is not None and len(event_shape) != event_ndim:
-                raise ValueError("model.event_ndim does not match base.event_shape")
+                msg = "model.event_ndim does not match base.event_shape"
+                raise ValueError(msg)
 
         return DiffusionProcess(
             model=model,
@@ -172,7 +175,8 @@ class DiffusionProcess:
             # Expand alpha/sigma for broadcasting with x
             eps = (x - _expand_like(alpha, x) * out) / _expand_like(sigma, x)
         else:
-            raise ValueError("unknown parameterization")
+            msg = "unknown parameterization"
+            raise ValueError(msg)
 
         return eps, alpha, sigma
 
@@ -202,7 +206,8 @@ class DiffusionProcess:
             if getattr(self._solver, "requires_steps", False):
                 steps = self._steps()
                 if steps is None:
-                    raise ValueError("solver requires steps")
+                    msg = "solver requires steps"
+                    raise ValueError(msg)
                 kwargs["steps"] = steps
             return self._solver.integrate(drift, x0, t0=self._t0, t1=self._t1, **kwargs)
 
@@ -221,18 +226,22 @@ class DiffusionProcess:
 
         steps = self._steps()
         if steps is None:
-            raise ValueError("sde solver requires steps")
+            msg = "sde solver requires steps"
+            raise ValueError(msg)
         return self._solver.integrate(
             drift, diffusion, x0, t0=self._t0, t1=self._t1, steps=steps
         )
 
     def rsample(self, sample_shape=(), *, guidance_fn=None) -> torch.Tensor:
         if not self._is_ode():
-            raise NotImplementedError("rsample is supported only for ODE solvers")
+            msg = "rsample is supported only for ODE solvers"
+            raise NotImplementedError(msg)
         if not has_rsample(self._base):
-            raise NotImplementedError("base distribution does not support rsample")
+            msg = "base distribution does not support rsample"
+            raise NotImplementedError(msg)
         if not getattr(self._solver, "supports_rsample", False):
-            raise NotImplementedError("solver does not support rsample")
+            msg = "solver does not support rsample"
+            raise NotImplementedError(msg)
 
         x0 = self._base.rsample(sample_shape)
         x0 = self._apply_base_scale(x0)
@@ -252,7 +261,8 @@ class DiffusionProcess:
         if getattr(self._solver, "requires_steps", False):
             steps = self._steps()
             if steps is None:
-                raise ValueError("solver requires steps")
+                msg = "solver requires steps"
+                raise ValueError(msg)
             kwargs["steps"] = steps
         return self._solver.integrate(drift, x0, t0=self._t0, t1=self._t1, **kwargs)
 

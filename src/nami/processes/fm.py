@@ -50,11 +50,12 @@ class FlowMatching(LazyDistribution):
         if event_ndim is None:
             event_ndim = self.event_ndim
         if event_ndim is None:
-            raise ValueError("event_ndim must be provided or exposed by field")
+            msg = "event_ndim must be provided or exposed by field"
+            raise ValueError(msg)
 
-        if self.validate_args:
-            if len(base.event_shape) != event_ndim:
-                raise ValueError("base.event_shape does not match field.event_ndim")
+        if self.validate_args and len(base.event_shape) != event_ndim:
+            msg = "base.event_shape does not match field.event_ndim"
+            raise ValueError(msg)
 
         return FlowMatchingProcess(
             field=field,
@@ -133,7 +134,8 @@ class FlowMatchingProcess:
         if getattr(self._solver, "requires_steps", False):
             steps = getattr(self._solver, "steps", None)
             if steps is None:
-                raise ValueError("solver requires steps")
+                msg = "solver requires steps"
+                raise ValueError(msg)
             kwargs["steps"] = steps
         return self._solver.integrate(f, x0, t0=t0, t1=t1, **kwargs)
 
@@ -141,12 +143,14 @@ class FlowMatchingProcess:
         self, f_aug, x0: torch.Tensor, logp0: torch.Tensor, *, t0: float, t1: float
     ):
         if not hasattr(self._solver, "integrate_augmented"):
-            raise NotImplementedError("solver does not support augmented integration")
+            msg = "solver does not support augmented integration"
+            raise NotImplementedError(msg)
         kwargs = {}
         if getattr(self._solver, "requires_steps", False):
             steps = getattr(self._solver, "steps", None)
             if steps is None:
-                raise ValueError("solver requires steps")
+                msg = "solver requires steps"
+                raise ValueError(msg)
             kwargs["steps"] = steps
         return self._solver.integrate_augmented(
             f_aug, x0, logp0, t0=t0, t1=t1, **kwargs
@@ -164,9 +168,11 @@ class FlowMatchingProcess:
 
     def rsample(self, sample_shape=()) -> torch.Tensor:
         if not has_rsample(self._base):
-            raise NotImplementedError("base distribution does not support rsample")
+            msg = "base distribution does not support rsample"
+            raise NotImplementedError(msg)
         if not getattr(self._solver, "supports_rsample", False):
-            raise NotImplementedError("solver does not support rsample")
+            msg = "solver does not support rsample"
+            raise NotImplementedError(msg)
 
         z = self._base.rsample(sample_shape)
         context = self._expand_context(self._context, z)
@@ -180,7 +186,8 @@ class FlowMatchingProcess:
     def log_prob(self, x: torch.Tensor, *, estimator=None) -> torch.Tensor:
         event_ndim = getattr(self._field, "event_ndim", None)
         if event_ndim is None:
-            raise ValueError("field.event_ndim is required")
+            msg = "field.event_ndim is required"
+            raise ValueError(msg)
         lead = x.shape[:-event_ndim] if event_ndim else x.shape
         logp0 = torch.zeros(lead, device=x.device, dtype=x.dtype)
         context = self._expand_context(self._context, x)
@@ -194,8 +201,9 @@ class FlowMatchingProcess:
                 try:
                     v, div = self._field.call_and_divergence(xi, tt, context)
                 except NotImplementedError as exc:
+                    msg = "field must implement call_and_divergence or provide an estimator"
                     raise NotImplementedError(
-                        "field must implement call_and_divergence or provide an estimator"
+                        msg
                     ) from exc
             return v, -div
 

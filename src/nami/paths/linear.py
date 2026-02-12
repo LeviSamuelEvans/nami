@@ -16,4 +16,5 @@ class LinearPath(ProbabilityPath):
     def target_ut(
         self, x_target: torch.Tensor, x_source: torch.Tensor, t: torch.Tensor
     ) -> torch.Tensor:
+        _ = t
         return x_source - x_target

@@ -11,7 +11,8 @@ class EulerMaruyama:
 
     def __init__(self, steps: int = 64):
         if steps <= 0:
-            raise ValueError(f"steps must be positive, got {steps}")
+            msg = f"steps must be positive, got {steps}"
+            raise ValueError(msg)
         self.steps = int(steps)
 
     def integrate(
@@ -26,7 +27,8 @@ class EulerMaruyama:
     ) -> torch.Tensor:
         steps = int(steps or self.steps)
         if steps <= 0:
-            raise ValueError(f"steps must be positive, got {steps}")
+            msg = f"steps must be positive, got {steps}"
+            raise ValueError(msg)
         dt = (t1 - t0) / steps
         sqrt_dt = math.sqrt(abs(dt))
         x = x0

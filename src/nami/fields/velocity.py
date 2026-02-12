@@ -1,6 +1,9 @@
-from .base import VectorField
+from __future__ import annotations
+
 import torch
 from torch import nn
+
+from .base import VectorField
 
 
 class VelocityField(VectorField):  # inherit from VectorField instead of nn.Module
@@ -21,5 +24,6 @@ class VelocityField(VectorField):  # inherit from VectorField instead of nn.Modu
         return 1
 
     def forward(self, x, t, c=None):
+        _ = c
         t_exp = t.unsqueeze(-1).expand(*x.shape[:-1], 1)
         return self.net(torch.cat([x, t_exp], dim=-1))

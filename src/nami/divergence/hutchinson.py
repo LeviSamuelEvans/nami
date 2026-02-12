@@ -13,7 +13,8 @@ def _rademacher_like(x: torch.Tensor) -> torch.Tensor:
 class HutchinsonDivergence(DivergenceEstimator):
     def __init__(self, probe: str = "rademacher"):
         if probe not in {"rademacher", "gaussian"}:
-            raise ValueError("probe must be 'rademacher' or 'gaussian'")
+            msg = "probe must be 'rademacher' or 'gaussian'"
+            raise ValueError(msg)
         self.probe = probe
 
     def __call__(
@@ -21,8 +22,9 @@ class HutchinsonDivergence(DivergenceEstimator):
     ) -> torch.Tensor:
         event_ndim = getattr(field, "event_ndim", None)
         if event_ndim is None:
-            raise ValueError("field.event_ndim is required for divergence")
-        lead, event_shape = split_event(x, event_ndim)
+            msg = "field.event_ndim is required for divergence"
+            raise ValueError(msg)
+        lead, _event_shape = split_event(x, event_ndim)
 
         with torch.enable_grad():
             # clone to avoid mutating input tensor's grad state
@@ -39,5 +41,4 @@ class HutchinsonDivergence(DivergenceEstimator):
             dot = (v * eps).sum()
             grad = torch.autograd.grad(dot, x_req, create_graph=False)[0]
 
-        div = (grad * eps).reshape(*lead, -1).sum(dim=-1)
-        return div
+        return (grad * eps).reshape(*lead, -1).sum(dim=-1)

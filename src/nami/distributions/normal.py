@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 import torch
 from torch.distributions import Distribution, Independent, Normal
 
 from ..core.specs import as_tuple
 
+_EMPTY_SIZE = torch.Size()
+
 
 class StandardNormal(Distribution):
     has_rsample = True
-    arg_constraints = {}  # no tensor args to validate; shape/device/dtype are handled internally
+    arg_constraints: ClassVar[dict[str, object]] = {}  # no tensor args to validate; shape/device/dtype are handled internally
 
     def __init__(
         self,
@@ -34,10 +38,10 @@ class StandardNormal(Distribution):
             validate_args=validate_args,
         )
 
-    def sample(self, sample_shape: torch.Size = torch.Size()) -> torch.Tensor:
+    def sample(self, sample_shape: torch.Size = _EMPTY_SIZE) -> torch.Tensor:
         return self._base.sample(sample_shape)
 
-    def rsample(self, sample_shape: torch.Size = torch.Size()) -> torch.Tensor:
+    def rsample(self, sample_shape: torch.Size = _EMPTY_SIZE) -> torch.Tensor:
         return self._base.rsample(sample_shape)
 
     def log_prob(self, value: torch.Tensor) -> torch.Tensor:
@@ -67,7 +71,7 @@ class StandardNormal(Distribution):
 
 class DiagonalNormal(Distribution):
     has_rsample = True
-    arg_constraints = {}
+    arg_constraints: ClassVar[dict[str, object]] = {}
 
     def __init__(
         self,
@@ -88,10 +92,10 @@ class DiagonalNormal(Distribution):
             validate_args=validate_args,
         )
 
-    def sample(self, sample_shape: torch.Size = torch.Size()) -> torch.Tensor:
+    def sample(self, sample_shape: torch.Size = _EMPTY_SIZE) -> torch.Tensor:
         return self._base.sample(sample_shape)
 
-    def rsample(self, sample_shape: torch.Size = torch.Size()) -> torch.Tensor:
+    def rsample(self, sample_shape: torch.Size = _EMPTY_SIZE) -> torch.Tensor:
         return self._base.rsample(sample_shape)
 
     def log_prob(self, value: torch.Tensor) -> torch.Tensor:

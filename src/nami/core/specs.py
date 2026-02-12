@@ -31,9 +31,11 @@ def split_event(
 ) -> tuple[tuple[int, ...], tuple[int, ...]]:
     """given a tensor, return shape split into leading shape and event shape"""
     if event_ndim < 0:
-        raise ValueError("event_ndim must be >= 0")
+        msg = "event_ndim must be >= 0"
+        raise ValueError(msg)
     if event_ndim > x.ndim:
-        raise ValueError("event_ndim exceeds x.ndim")
+        msg = "event_ndim exceeds x.ndim"
+        raise ValueError(msg)
     if event_ndim == 0:
         return tuple(x.shape), ()
     return tuple(x.shape[:-event_ndim]), tuple(x.shape[-event_ndim:])
@@ -42,9 +44,11 @@ def split_event(
 def flatten_event(x: torch.Tensor, event_ndim: int) -> torch.Tensor:
     """collapse all event dimensions into a single flat dimension"""
     if event_ndim < 0:
-        raise ValueError("event_ndim must be >= 0")
+        msg = "event_ndim must be >= 0"
+        raise ValueError(msg)
     if event_ndim > x.ndim:
-        raise ValueError("event_ndim exceeds x.ndim")
+        msg = "event_ndim exceeds x.ndim"
+        raise ValueError(msg)
     if event_ndim == 0:
         return x
     return x.reshape(*x.shape[:-event_ndim], -1)
@@ -67,15 +71,18 @@ def validate_shapes(
     prevent silent broadcasting
     """
     if event_ndim < 0:
-        raise ValueError("event_ndim must be >= 0")
+        msg = "event_ndim must be >= 0"
+        raise ValueError(msg)
     if event_ndim > tensor.ndim:
-        raise ValueError("event_ndim exceeds tensor.ndim")
+        msg = "event_ndim exceeds tensor.ndim"
+        raise ValueError(msg)
 
     if expected_event_shape is not None:
         actual_event_shape = tuple(tensor.shape[-event_ndim:] if event_ndim > 0 else ())
         if actual_event_shape != expected_event_shape:
+            msg = f"event_shape mismatch: expected {expected_event_shape}, got {actual_event_shape}"
             raise ValueError(
-                f"event_shape mismatch: expected {expected_event_shape}, got {actual_event_shape}"
+                msg
             )
 
     if batch_shape is not None:
@@ -83,8 +90,9 @@ def validate_shapes(
             tensor.shape[:-event_ndim] if event_ndim > 0 else tensor.shape
         )
         if actual_batch_shape != batch_shape:
+            msg = f"batch_shape mismatch: expected {batch_shape}, got {actual_batch_shape}"
             raise ValueError(
-                f"batch_shape mismatch: expected {batch_shape}, got {actual_batch_shape}"
+                msg
             )
 
 

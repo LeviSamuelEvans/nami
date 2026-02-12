@@ -4,6 +4,7 @@ from . import debug, diagnostics
 from .distributions.normal import DiagonalNormal, StandardNormal
 from .divergence.exact import ExactDivergence
 from .divergence.hutchinson import HutchinsonDivergence
+from .fields.velocity import VelocityField
 from .lazy import (
     LazyDistribution,
     LazyField,
@@ -12,7 +13,6 @@ from .lazy import (
 )
 from .losses.fm import fm_loss
 from .masking import masked_fm_loss, masked_sample
-from .fields.velocity import VelocityField
 from .paths.cosine import CosinePath
 from .paths.linear import LinearPath
 from .processes.diffusion import Diffusion, DiffusionProcess
@@ -43,9 +43,9 @@ __all__ = [
     "StandardNormal",
     "UnconditionalDistribution",
     "UnconditionalField",
-    "VelocityField",
     "VESchedule",
     "VPSchedule",
+    "VelocityField",
     "debug",
     "diagnostics",
     "fm_loss",
