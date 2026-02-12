@@ -17,7 +17,8 @@ def fm_loss(
 ) -> torch.Tensor:
     event_ndim = getattr(field, "event_ndim", None)
     if event_ndim is None:
-        raise ValueError("field.event_ndim is required")
+        msg = "field.event_ndim is required"
+        raise ValueError(msg)
 
     # default to LinearPath if no path is provided
     if path is None:
@@ -44,4 +45,5 @@ def fm_loss(
         return mse.sum()
     if reduction == "mean":
         return mse.mean()
-    raise ValueError("reduction must be 'mean', 'sum', or 'none'")
+    msg = "reduction must be 'mean', 'sum', or 'none'"
+    raise ValueError(msg)

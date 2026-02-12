@@ -9,7 +9,8 @@ def expand_distribution(
     if dist.batch_shape == batch_shape:
         return dist
     if not hasattr(dist, "expand"):
-        raise ValueError("distribution does not support expand")
+        msg = "distribution does not support expand"
+        raise ValueError(msg)
     return dist.expand(batch_shape)
 
 

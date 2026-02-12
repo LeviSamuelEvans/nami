@@ -10,7 +10,8 @@ class Heun:
 
     def __init__(self, steps: int = 32):
         if steps <= 0:
-            raise ValueError(f"steps must be positive, got {steps}")
+            msg = f"steps must be positive, got {steps}"
+            raise ValueError(msg)
         self.steps = int(steps)
 
     def integrate(
@@ -24,7 +25,8 @@ class Heun:
     ) -> torch.Tensor:
         steps = int(steps or self.steps)
         if steps <= 0:
-            raise ValueError(f"steps must be positive, got {steps}")
+            msg = f"steps must be positive, got {steps}"
+            raise ValueError(msg)
         dt = (t1 - t0) / steps
         x = x0
         t = t0
@@ -49,7 +51,8 @@ class Heun:
     ) -> tuple[torch.Tensor, torch.Tensor]:
         steps = int(steps or self.steps)
         if steps <= 0:
-            raise ValueError(f"steps must be positive, got {steps}")
+            msg = f"steps must be positive, got {steps}"
+            raise ValueError(msg)
         dt = (t1 - t0) / steps
         x = x0
         logp = logp0

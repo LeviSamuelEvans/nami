@@ -28,6 +28,7 @@ class UnconditionalDistribution(LazyDistribution):
     def forward(
         self, c: torch.Tensor | None = None
     ) -> torch.distributions.Distribution:
+        _ = c
         return self._dist
 
 
@@ -41,4 +42,5 @@ class UnconditionalField(LazyField):
         return getattr(self._field, "event_ndim", None)
 
     def forward(self, c: torch.Tensor | None = None):
+        _ = c
         return self._field

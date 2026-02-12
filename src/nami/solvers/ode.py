@@ -10,7 +10,8 @@ class RK4:
 
     def __init__(self, steps: int = 32):
         if steps <= 0:
-            raise ValueError(f"steps must be positive, got {steps}")
+            msg = f"steps must be positive, got {steps}"
+            raise ValueError(msg)
         self.steps = int(steps)
 
     def integrate(
@@ -20,13 +21,15 @@ class RK4:
         *,
         t0: float,
         t1: float,
-        atol: float = 1e-6, # unused
-        rtol: float = 1e-5, # unused
+        atol: float = 1e-6,  # unused
+        rtol: float = 1e-5,  # unused
         steps: int | None = None,
     ) -> torch.Tensor:
+        _ = atol, rtol
         steps = int(steps or self.steps)
         if steps <= 0:
-            raise ValueError(f"steps must be positive, got {steps}")
+            msg = f"steps must be positive, got {steps}"
+            raise ValueError(msg)
         dt = (t1 - t0) / steps
         x = x0
         t = t0
@@ -49,13 +52,15 @@ class RK4:
         *,
         t0: float,
         t1: float,
-        atol: float = 1e-6, # unused
-        rtol: float = 1e-5, # unused
+        atol: float = 1e-6,  # unused
+        rtol: float = 1e-5,  # unused
         steps: int | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        _ = atol, rtol
         steps = int(steps or self.steps)
         if steps <= 0:
-            raise ValueError(f"steps must be positive, got {steps}")
+            msg = f"steps must be positive, got {steps}"
+            raise ValueError(msg)
         dt = (t1 - t0) / steps
         x = x0
         logp = logp0

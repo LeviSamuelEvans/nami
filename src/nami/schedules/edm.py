@@ -13,11 +13,14 @@ class EDMSchedule(NoiseSchedule):
         self.sigma_max = float(sigma_max)
         self.rho = float(rho)
         if self.sigma_min <= 0 or self.sigma_max <= 0:
-            raise ValueError("sigma_min and sigma_max must be positive")
+            msg = "sigma_min and sigma_max must be positive"
+            raise ValueError(msg)
         if self.sigma_max <= self.sigma_min:
-            raise ValueError("sigma_max must be > sigma_min")
+            msg = "sigma_max must be > sigma_min"
+            raise ValueError(msg)
         if self.rho <= 0:
-            raise ValueError("rho must be positive")
+            msg = "rho must be positive"
+            raise ValueError(msg)
 
     def _sigma_bounds(self, t: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         t = torch.as_tensor(t)
@@ -33,6 +36,7 @@ class EDMSchedule(NoiseSchedule):
         return torch.ones_like(t)
 
     def drift(self, x: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
+        _ = t
         return torch.zeros_like(x)
 
     def diffusion(self, t: torch.Tensor) -> torch.Tensor:

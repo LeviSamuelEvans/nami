@@ -12,9 +12,7 @@ import torch
 from .paths.linear import LinearPath
 
 
-def _expand_mask(
-    mask: torch.Tensor, x: torch.Tensor, event_ndim: int
-) -> torch.Tensor:
+def _expand_mask(mask: torch.Tensor, x: torch.Tensor, event_ndim: int) -> torch.Tensor:
     """Expand *mask* so it broadcasts with *x*.
 
     Parameters
@@ -81,11 +79,11 @@ def masked_fm_loss(
     """
     event_ndim = getattr(field, "event_ndim", None)
     if event_ndim is None:
-        raise ValueError("field.event_ndim is required")
+        msg = "field.event_ndim is required"
+        raise ValueError(msg)
     if event_ndim < 2:
-        raise ValueError(
-            "masked_fm_loss requires event_ndim >= 2 (objects x features)"
-        )
+        msg = "masked_fm_loss requires event_ndim >= 2 (objects x features)"
+        raise ValueError(msg)
 
     if path is None:
         path = LinearPath()
@@ -123,7 +121,8 @@ def masked_fm_loss(
         return mse.sum()
     if reduction == "mean":
         return mse.mean()
-    raise ValueError("reduction must be 'mean', 'sum', or 'none'")
+    msg = "reduction must be 'mean', 'sum', or 'none'"
+    raise ValueError(msg)
 
 
 def masked_sample(
@@ -170,7 +169,8 @@ def masked_sample(
     """
     event_ndim = getattr(field, "event_ndim", None)
     if event_ndim is None:
-        raise ValueError("field.event_ndim is required")
+        msg = "field.event_ndim is required"
+        raise ValueError(msg)
 
     z = base.sample(sample_shape)
     mask_f = mask.float()
@@ -197,7 +197,8 @@ def masked_sample(
     if getattr(solver, "requires_steps", False):
         steps = getattr(solver, "steps", None)
         if steps is None:
-            raise ValueError("solver requires steps")
+            msg = "solver requires steps"
+            raise ValueError(msg)
         kwargs["steps"] = steps
 
     return solver.integrate(f, z, t0=t0, t1=t1, **kwargs)

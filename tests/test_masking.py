@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
-from nami.masking import _expand_mask, masked_fm_loss, masked_sample
-from nami.losses.fm import fm_loss
 from nami.distributions.normal import StandardNormal
+from nami.losses.fm import fm_loss
+from nami.masking import _expand_mask, masked_fm_loss, masked_sample
+from nami.paths.cosine import CosinePath
 from nami.solvers.ode import RK4
+
 
 # helpers for this
 class SimpleSetField(nn.Module):
@@ -28,6 +30,7 @@ class SimpleSetField(nn.Module):
         return 2
 
     def forward(self, x, t, c=None):
+        _ = c
         flat = x.reshape(*x.shape[:-2], -1)
         t_exp = t.unsqueeze(-1).expand(*flat.shape[:-1], 1)
         out = self.net(torch.cat([flat, t_exp], dim=-1))
@@ -42,6 +45,7 @@ class ZeroField(nn.Module):
         return 2
 
     def forward(self, x, t, c=None):
+        _ = t, c
         return torch.zeros_like(x)
 
 
@@ -53,6 +57,7 @@ class ConstantDecayField(nn.Module):
         return 2
 
     def forward(self, x, t, c=None):
+        _ = t, c
         return -x
 
 
@@ -64,6 +69,7 @@ class Scalar1DField(nn.Module):
         return 1
 
     def forward(self, x, t, c=None):
+        _ = t, c
         return torch.zeros_like(x)
 
 
@@ -181,9 +187,7 @@ class TestMaskedFmLoss:
         mask = torch.tensor([[1.0, 1.0, 0.0]])
         t = torch.tensor([0.5])
 
-        loss = masked_fm_loss(
-            field, x_target, x_source, mask, t=t, reduction="none"
-        )
+        loss = masked_fm_loss(field, x_target, x_source, mask, t=t, reduction="none")
         assert torch.allclose(loss, torch.tensor([7.5]))
 
     def test_zero_mask_gives_zero_loss(self):
@@ -213,8 +217,6 @@ class TestMaskedFmLoss:
             masked_fm_loss(field, x, x, mask)
 
     def test_custom_path(self, setup):
-        from nami.paths.cosine import CosinePath
-
         field, x_target, x_source, mask = setup
         loss = masked_fm_loss(field, x_target, x_source, mask, path=CosinePath())
         assert loss.shape == ()
@@ -266,9 +268,7 @@ class TestMaskedSample:
         mask = torch.ones(batch, n_objects)
         mask[:, 7:] = 0
 
-        result = masked_sample(
-            field, base, solver, mask, sample_shape=(batch,)
-        )
+        result = masked_sample(field, base, solver, mask, sample_shape=(batch,))
         assert result.shape == (batch, n_objects, dim)
 
     def test_padded_positions_are_zero(self):
@@ -281,9 +281,7 @@ class TestMaskedSample:
         mask = torch.ones(batch, n_objects)
         mask[:, 5:] = 0
 
-        result = masked_sample(
-            field, base, solver, mask, sample_shape=(batch,)
-        )
+        result = masked_sample(field, base, solver, mask, sample_shape=(batch,))
         assert torch.all(result[:, 5:] == 0.0)
 
     def test_real_positions_nonzero(self):
@@ -296,9 +294,7 @@ class TestMaskedSample:
         mask = torch.ones(batch, n_objects)
         mask[:, 5:] = 0
 
-        result = masked_sample(
-            field, base, solver, mask, sample_shape=(batch,)
-        )
+        result = masked_sample(field, base, solver, mask, sample_shape=(batch,))
         assert not torch.all(result[:, :5] == 0.0)
 
     def test_all_ones_mask(self):
@@ -310,9 +306,7 @@ class TestMaskedSample:
         solver = RK4(steps=5)
         mask = torch.ones(batch, n_objects)
 
-        result = masked_sample(
-            field, base, solver, mask, sample_shape=(batch,)
-        )
+        result = masked_sample(field, base, solver, mask, sample_shape=(batch,))
         assert result.shape == (batch, n_objects, dim)
         assert not torch.all(result == 0.0)
 
@@ -332,9 +326,7 @@ class TestMaskedSample:
         solver = RK4(steps=2)
         mask = torch.ones(n_objects)  # no batch dim
 
-        result = masked_sample(
-            field, base, solver, mask, sample_shape=(2, 3)
-        )
+        result = masked_sample(field, base, solver, mask, sample_shape=(2, 3))
         assert result.shape == (2, 3, n_objects, dim)
 
     def test_variable_mask_per_event(self):
@@ -346,14 +338,12 @@ class TestMaskedSample:
         solver = RK4(steps=5)
 
         mask = torch.zeros(batch, n_objects)
-        mask[0, :3] = 1   # event 0: 3 particles
-        mask[1, :7] = 1   # event 1: 7 particles
-        mask[2, :1] = 1   # event 2: 1 particle
+        mask[0, :3] = 1  # event 0: 3 particles
+        mask[1, :7] = 1  # event 1: 7 particles
+        mask[2, :1] = 1  # event 2: 1 particle
         mask[3, :10] = 1  # event 3: all 10 particles
 
-        result = masked_sample(
-            field, base, solver, mask, sample_shape=(batch,)
-        )
+        result = masked_sample(field, base, solver, mask, sample_shape=(batch,))
 
         assert torch.all(result[0, 3:] == 0.0), "event 0 padding not zero"
         assert torch.all(result[1, 7:] == 0.0), "event 1 padding not zero"
@@ -369,8 +359,6 @@ class TestMaskedSample:
         mask = torch.ones(batch, n_objects, dtype=torch.long)
         mask[:, 4:] = 0
 
-        result = masked_sample(
-            field, base, solver, mask, sample_shape=(batch,)
-        )
+        result = masked_sample(field, base, solver, mask, sample_shape=(batch,))
         assert result.shape == (batch, n_objects, dim)
         assert torch.all(result[:, 4:] == 0.0)

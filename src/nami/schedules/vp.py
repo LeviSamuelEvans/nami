@@ -8,9 +8,11 @@ from .base import NoiseSchedule
 class VPSchedule(NoiseSchedule):
     def __init__(self, beta_min: float = 0.1, beta_max: float = 20.0):
         if beta_min <= 0 or beta_max <= 0:
-            raise ValueError("beta_min and beta_max must be positive")
+            msg = "beta_min and beta_max must be positive"
+            raise ValueError(msg)
         if beta_max <= beta_min:
-            raise ValueError("beta_max must be > beta_min")
+            msg = "beta_max must be > beta_min"
+            raise ValueError(msg)
         self.beta_min = float(beta_min)
         self.beta_max = float(beta_max)
 

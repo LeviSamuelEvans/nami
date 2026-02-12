@@ -10,7 +10,8 @@ def field_stats(
 ) -> dict[str, torch.Tensor]:
     event_ndim = getattr(field, "event_ndim", None)
     if event_ndim is None:
-        raise ValueError("field.event_ndim is required")
+        msg = "field.event_ndim is required"
+        raise ValueError(msg)
 
     x, t, c = broadcast(x, t, c, event_ndim=event_ndim, validate_args=True)
     v = field(x, t, c)
@@ -39,7 +40,8 @@ def divergence_stats(
 ) -> dict[str, torch.Tensor]:
     event_ndim = getattr(field, "event_ndim", None)
     if event_ndim is None:
-        raise ValueError("field.event_ndim is required")
+        msg = "field.event_ndim is required"
+        raise ValueError(msg)
 
     x, t, c = broadcast(x, t, c, event_ndim=event_ndim, validate_args=True)
 
@@ -49,8 +51,9 @@ def divergence_stats(
         try:
             _, div = field.call_and_divergence(x, t, c)
         except NotImplementedError as exc:
+            msg = "field must implement call_and_divergence or provide an estimator"
             raise NotImplementedError(
-                "field must implement call_and_divergence or provide an estimator"
+                msg
             ) from exc
 
     return {
@@ -73,7 +76,8 @@ def reversibility_error(
 ) -> dict[str, torch.Tensor]:
     event_ndim = getattr(field, "event_ndim", None)
     if event_ndim is None:
-        raise ValueError("field.event_ndim is required")
+        msg = "field.event_ndim is required"
+        raise ValueError(msg)
 
     def cast_time(t: float | torch.Tensor, like: torch.Tensor) -> torch.Tensor:
         return torch.as_tensor(t, device=like.device, dtype=like.dtype)
@@ -86,7 +90,8 @@ def reversibility_error(
     if getattr(solver, "requires_steps", False):
         steps = int(steps or getattr(solver, "steps", 0))
         if steps <= 0:
-            raise ValueError("solver requires steps")
+            msg = "solver requires steps"
+            raise ValueError(msg)
         kwargs["steps"] = steps
 
     z = solver.integrate(f, x, t0=t1, t1=t0, **kwargs)

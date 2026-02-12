@@ -21,7 +21,8 @@ def broadcast(
     if c is not None:
         if c.ndim < 1:
             if validate_args:
-                raise ValueError("context tensor must have at least 1 dim")
+                msg = "context tensor must have at least 1 dim"
+                raise ValueError(msg)
         else:
             shapes.append(tuple(c.shape[:-1]))
 
@@ -29,7 +30,8 @@ def broadcast(
         target = torch.broadcast_shapes(*shapes)
     except RuntimeError as exc:
         if validate_args:
-            raise ValueError("failed to broadcast x, t, c") from exc
+            msg = "failed to broadcast x, t, c"
+            raise ValueError(msg) from exc
         raise
 
     if tuple(x.shape[:-event_ndim] if event_ndim else x.shape) != target:
@@ -41,6 +43,6 @@ def broadcast(
     if c is not None and c.ndim >= 1:
         ctx = c.shape[-1]
         if tuple(c.shape[:-1]) != target:
-            c = c.expand(target + (ctx,))
+            c = c.expand((*target, ctx))
 
     return x, t, c
