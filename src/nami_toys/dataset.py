@@ -27,6 +27,14 @@ class ToyDataset:
     def __len__(self) -> int:
         return self.x.shape[0]
 
+    def __repr__(self) -> str:
+        n, d = self.x.shape
+        labels = (
+            f", labels={set(self.y.unique().tolist())}" if self.y is not None else ""
+        )
+        meta = f", meta={self.meta}" if self.meta else ""
+        return f"ToyDataset(n={n}, d={d}{labels}{meta})"
+
     def subset(self, mask: torch.Tensor) -> ToyDataset:
         """Return a new dataset containing only entries where *mask* is True."""
         y_sub = self.y[mask] if self.y is not None else None
