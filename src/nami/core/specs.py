@@ -81,9 +81,7 @@ def validate_shapes(
         actual_event_shape = tuple(tensor.shape[-event_ndim:] if event_ndim > 0 else ())
         if actual_event_shape != expected_event_shape:
             msg = f"event_shape mismatch: expected {expected_event_shape}, got {actual_event_shape}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
     if batch_shape is not None:
         actual_batch_shape = tuple(
@@ -91,16 +89,15 @@ def validate_shapes(
         )
         if actual_batch_shape != batch_shape:
             msg = f"batch_shape mismatch: expected {batch_shape}, got {actual_batch_shape}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
 
 @dataclass(frozen=True)
 class TensorSpec:
-    """minimal specification of tensor for models, samplers, and distribution components.
+    """Minimal tensor specification for models, samplers, and distributions.
 
     Attributes:
+    ----------
         event_shape (tuple[int, ...]): The shape of a single event (sample, vector, matrix, etc).
         dtype (torch.dtype | None): The expected data type of the tensor.
     """
