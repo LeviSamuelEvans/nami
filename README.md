@@ -3,10 +3,11 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org) [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c)](https://pytorch.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![codecov](https://codecov.io/gh/LeviSamuelEvans/nami/branch/main/graph/badge.svg)](https://codecov.io/gh/LeviSamuelEvans/nami)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Documentation](https://github.com/LeviSamuelEvans/nami/actions/workflows/docs.yaml/badge.svg)](https://levisamuelevans.github.io/nami/)
 
 A minimal, modular flow matching library for research studies, providing the building blocks for flow-based generative models with explicit shape semantics and pluggable components. Primarily, this is a personal tool for use in other projects (and for fun). Much of the design is heavily inspired by the fantastic [Zuko](https://github.com/probabilists/zuko/tree/master) library, who coined the term `LazyDistribution`.
 
-See the documentation at ...
+See the [documentation](https://levisamuelevans.github.io/nami/) for examples, tutorials and the full reference API.
 
 ## Installation
 

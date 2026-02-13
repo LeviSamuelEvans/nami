@@ -3,8 +3,23 @@ name: Docs
 on:
   push:
     branches: [main]
+    paths:
+      - 'docs/**'
+      - 'src/**'
+      - 'pyproject.toml'
+    paths-ignore:
+      - 'README.md'
+      - 'books/**'
   pull_request:
     branches: [main]
+    paths:
+      - 'docs/**'
+      - 'src/**'
+      - 'pyproject.toml'
+      - '.github/workflows/docs.yaml'
+    paths-ignore:
+      - 'README.md'
+      - 'books/**'
 
 permissions:
   contents: read
