@@ -6,6 +6,7 @@ import torch
 
 # Based on https://github.com/malbergo/stochastic-interpolants/tree/main [https://arxiv.org/abs/2303.08797 Albergo et al.]
 
+
 class GammaSchedule:
     def gamma(self, t: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
