@@ -68,7 +68,7 @@ def masked_fm_loss(
         Per-sample time values (``lead``).  Uniform random if *None*.
     c : Tensor, optional
         Conditioning context forwarded to the field.
-    path : ProbabilityPath, optional
+    path : nami.paths.base.ProbabilityPath, optional
         Defaults to :class:`~nami.paths.linear.LinearPath`.
     reduction : ``'mean'`` | ``'sum'`` | ``'none'``
 
