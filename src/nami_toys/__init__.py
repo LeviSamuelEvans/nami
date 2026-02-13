@@ -4,7 +4,9 @@ from .checkerboard import Checkerboard
 from .dataset import ToyDataset
 from .gaussian import GaussianMixture
 from .moons import TwoMoons
+from .parameterised import ParameterisedGaussian
 from .ring import GaussianRing
+from .rng import make_generator
 from .shell import GaussianShell
 from .spirals import TwoSpirals
 from .standardise import Standardiser
@@ -14,8 +16,10 @@ __all__ = [
     "GaussianMixture",
     "GaussianRing",
     "GaussianShell",
+    "ParameterisedGaussian",
     "Standardiser",
     "ToyDataset",
     "TwoMoons",
     "TwoSpirals",
+    "make_generator",
 ]
