@@ -202,9 +202,7 @@ class FlowMatchingProcess:
                     v, div = self._field.call_and_divergence(xi, tt, context)
                 except NotImplementedError as exc:
                     msg = "field must implement call_and_divergence or provide an estimator"
-                    raise NotImplementedError(
-                        msg
-                    ) from exc
+                    raise NotImplementedError(msg) from exc
             return v, -div
 
         z, delta = self._integrate_augmented(f_aug, x, logp0, t0=self._t1, t1=self._t0)

@@ -1,0 +1,129 @@
+:root {
+  --pst-color-primary: #1f4b85;
+  --pst-color-secondary: #2d6db5;
+  --pst-color-link: #1f4b85;
+  --pst-color-link-hover: #16365f;
+  --pst-font-family-base: "Source Sans 3", "Segoe UI", -apple-system, sans-serif;
+  --pst-font-family-heading: "IBM Plex Sans", "Source Sans 3", sans-serif;
+  --pst-font-family-monospace: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+html[data-theme="dark"] {
+  --pst-color-primary: #7fb2f0;
+  --pst-color-secondary: #94c0f5;
+  --pst-color-link: #9ec9ff;
+  --pst-color-link-hover: #c4deff;
+  --pst-color-text-base: #e5e7eb;
+  --pst-color-text-muted: #cbd5e1;
+  --pst-color-surface: #111827;
+  --pst-color-background: #0b1220;
+}
+
+.bd-header {
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--pst-color-border);
+  box-shadow: 0 1px 0 rgb(15 23 42 / 6%);
+}
+
+.bd-page-width {
+  max-width: 92rem;
+}
+
+.bd-main .bd-content .bd-article-container {
+  max-width: 96ch;
+}
+
+.bd-sidebar-primary {
+  border-right: 1px solid var(--pst-color-border);
+}
+
+.bd-sidebar-primary .nav-link.active {
+  border-left: 2px solid var(--pst-color-primary);
+  font-weight: 650;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-weight: 760;
+}
+
+h2,
+h3 {
+  font-weight: 680;
+}
+
+pre,
+.bd-content div.highlight {
+  border-radius: 8px;
+}
+
+.admonition,
+div.admonition {
+  border-radius: 8px;
+}
+
+.bd-content code {
+  font-size: 0.92em;
+}
+
+/* nature-theme fallback */
+html:not([data-theme]) body {
+  font-family: "Source Sans 3", "Segoe UI", -apple-system, sans-serif;
+  color: #1f2937;
+}
+
+html:not([data-theme]) a {
+  color: #1f4b85;
+}
+
+html:not([data-theme]) a:hover {
+  color: #16365f;
+}
+
+html:not([data-theme]) div.related {
+  background: linear-gradient(90deg, #1f4b85, #2d6db5);
+}
+
+html:not([data-theme]) div.related a,
+html:not([data-theme]) div.related a:visited {
+  color: #f8fbff;
+}
+
+html:not([data-theme]) div.document {
+  margin-top: 0.8rem;
+}
+
+html:not([data-theme]) div.documentwrapper {
+  max-width: 76rem;
+}
+
+html:not([data-theme]) div.bodywrapper {
+  margin: 0 0 0 300px;
+}
+
+html:not([data-theme]) div.body {
+  max-width: 96ch;
+}
+
+html:not([data-theme]) div.sphinxsidebar {
+  width: 280px;
+  border-right: 1px solid #e5e7eb;
+}
+
+html:not([data-theme]) div.sphinxsidebar h3,
+html:not([data-theme]) div.sphinxsidebar h4 {
+  font-family: "IBM Plex Sans", "Source Sans 3", sans-serif;
+}
+
+html:not([data-theme]) div.sphinxsidebar a {
+  color: #1f4b85;
+}
+
+html:not([data-theme]) div.footer {
+  color: #4b5563;
+}

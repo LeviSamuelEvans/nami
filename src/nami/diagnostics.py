@@ -52,9 +52,7 @@ def divergence_stats(
             _, div = field.call_and_divergence(x, t, c)
         except NotImplementedError as exc:
             msg = "field must implement call_and_divergence or provide an estimator"
-            raise NotImplementedError(
-                msg
-            ) from exc
+            raise NotImplementedError(msg) from exc
 
     return {
         "mean": div.mean(),
