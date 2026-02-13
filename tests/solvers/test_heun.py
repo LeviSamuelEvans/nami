@@ -27,16 +27,20 @@ class TestHeunIntegrate:
 
     def test_constant_field(self, sample_tensor_2d):
         """Zero velocity field should leave state unchanged."""
+
         def f(x, _t):
             return torch.zeros_like(x)
+
         heun = Heun(steps=10)
         x1 = heun.integrate(f, sample_tensor_2d, t0=0.0, t1=1.0)
         assert torch.allclose(x1, sample_tensor_2d)
 
     def test_linear_decay(self):
         """Test dx/dt = -x, solution is x(t) = x0 * exp(-t)."""
+
         def f(x, _t):
             return -x
+
         x0 = torch.ones(5)
 
         heun = Heun(steps=100)
@@ -63,6 +67,7 @@ class TestHeunIntegrate:
 
     def test_custom_steps_override(self, sample_tensor_2d):
         """Steps parameter in integrate should override default."""
+
         def f(x, _t):
             return torch.zeros_like(x)
 
@@ -82,8 +87,10 @@ class TestHeunIntegrate:
     )
     def test_accuracy_vs_steps(self, steps, rtol):
         """More steps should give better accuracy for linear decay."""
+
         def f(x, _t):
             return -x
+
         x0 = torch.ones(5)
 
         heun = Heun(steps=steps)
