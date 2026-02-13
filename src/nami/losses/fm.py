@@ -3,6 +3,13 @@ from __future__ import annotations
 import torch
 
 from ..paths.linear import LinearPath
+from ._common import (
+    leading_shape,
+    per_sample_mse,
+    prepare_time,
+    reduce_loss,
+    require_event_ndim,
+)
 
 
 def fm_loss(
@@ -15,35 +22,18 @@ def fm_loss(
     path=None,
     reduction: str = "mean",
 ) -> torch.Tensor:
-    event_ndim = getattr(field, "event_ndim", None)
-    if event_ndim is None:
-        msg = "field.event_ndim is required"
-        raise ValueError(msg)
+    event_ndim = require_event_ndim(field)
 
     # default to LinearPath if no path is provided
     if path is None:
         path = LinearPath()
 
-    lead = x_target.shape[:-event_ndim] if event_ndim else x_target.shape
-
-    if t is None:
-        # always use float for time, even if x_target is integer or low-precision
-        dtype = x_target.dtype if x_target.dtype.is_floating_point else torch.float32
-        t = torch.rand(lead, device=x_target.device, dtype=dtype)
-    elif t.shape != lead:
-        t = t.expand(lead)
+    lead = leading_shape(x_target, event_ndim)
+    t = prepare_time(x_target, lead, t)
 
     xt = path.sample_xt(x_target, x_source, t)
     ut = path.target_ut(x_target, x_source, t)
     vt = field(xt, t, c)
+    mse = per_sample_mse(vt, ut, lead)
 
-    mse = (vt - ut).pow(2).reshape(*lead, -1).mean(dim=-1)
-
-    if reduction == "none":
-        return mse
-    if reduction == "sum":
-        return mse.sum()
-    if reduction == "mean":
-        return mse.mean()
-    msg = "reduction must be 'mean', 'sum', or 'none'"
-    raise ValueError(msg)
+    return reduce_loss(mse, reduction)
