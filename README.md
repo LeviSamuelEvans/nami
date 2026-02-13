@@ -39,6 +39,14 @@ If you prefer not to use pixi, you can install directly with pip (requires PyTor
 pip install -e .
 ```
 
+### Toy Datasets
+
+The additional `nami_toys` package (toy dataset generators for benchmarking) is included in the same repository and installed automatically alongside `nami`:
+
+```python
+from nami_toys import GaussianMixture, GaussianShell, TwoMoons, Checkerboard, GaussianRing, TwoSpirals
+```
+
 ### Development tasks
 
 pixi provides several convenience tasks:
