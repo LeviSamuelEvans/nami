@@ -7,9 +7,7 @@ on:
       - 'docs/**'
       - 'src/**'
       - 'pyproject.toml'
-    paths-ignore:
-      - 'README.md'
-      - 'books/**'
+      - '.github/workflows/docs.yaml'
   pull_request:
     branches: [main]
     paths:
@@ -17,9 +15,6 @@ on:
       - 'src/**'
       - 'pyproject.toml'
       - '.github/workflows/docs.yaml'
-    paths-ignore:
-      - 'README.md'
-      - 'books/**'
 
 permissions:
   contents: read
