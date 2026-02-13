@@ -52,6 +52,9 @@ docs = [
 ]
 
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/nami", "src/nami_toys"]
+
 [tool.hatch]
 
 [tool.hatch.envs.default]
