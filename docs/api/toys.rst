@@ -15,5 +15,7 @@ Installed automatically alongside ``nami``.
    moons
    checkerboard
    ring
+   parameterised
+   rng
    spirals
    standardise
