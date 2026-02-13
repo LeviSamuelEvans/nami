@@ -12,7 +12,9 @@ _EMPTY_SIZE = torch.Size()
 
 class StandardNormal(Distribution):
     has_rsample = True
-    arg_constraints: ClassVar[dict[str, object]] = {}  # no tensor args to validate; shape/device/dtype are handled internally
+    arg_constraints: ClassVar[
+        dict[str, object]
+    ] = {}  # no tensor args to validate; shape/device/dtype are handled internally
 
     def __init__(
         self,
