@@ -25,9 +25,15 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
+
+      - name: Upgrade pip
+        run: pip install --upgrade pip
+  
+      - name: Install package and docs dependencies
         run: |
-          pip install --dependency-group docs -e .
+            pip install -e .
+            pip install "sphinx>=7.0" "myst-nb>=1.1.0" sphinx_copybutton sphinx_autodoc_typehints "pydata-sphinx-theme>=0.16"
+
 
       - name: Build docs
         run: sphinx-build -b html docs docs/_build/html
