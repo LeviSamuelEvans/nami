@@ -37,4 +37,3 @@ class FiLMConditionalField(nn.Module):
         film_params = self.cond_net(c)
         scale, shift = torch.chunk(film_params, 2, dim=-1)
         return scale * h + shift
-
