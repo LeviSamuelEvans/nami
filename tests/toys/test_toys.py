@@ -9,15 +9,17 @@ from nami_toys import (
     GaussianMixture,
     GaussianRing,
     GaussianShell,
+    ParameterisedGaussian,
     Standardiser,
     ToyDataset,
     TwoMoons,
     TwoSpirals,
+    make_generator,
 )
-
 
 # ------------------------------------------------------------------------
 # Gaussian mixtures
+
 
 def test_gaussian_generate():
     sim = GaussianMixture()
@@ -40,6 +42,39 @@ def test_gaussian_custom():
     assert sim.d == 5
     ds = sim.generate(500, 0.5)
     assert ds.x.shape[1] == 5
+
+
+def test_parameterised_generate():
+    sim = ParameterisedGaussian()
+    ds = sim.generate(theta=1.5, n_expected=1000)
+    assert ds.x.ndim == 2
+    assert ds.x.shape[1] == 2
+    assert ds.y is not None
+    assert ds.meta["theta"] == 1.5
+
+
+def test_parameterised_theta_shifts_signal():
+    sim = ParameterisedGaussian(sig_frac=1.0)  # all signal
+    ds_lo = sim.generate(theta=-3.0, n_expected=2000)
+    ds_hi = sim.generate(theta=3.0, n_expected=2000)
+    # signal mean in dim 0 should differ noticeably
+    assert ds_hi.x[:, 0].mean() > ds_lo.x[:, 0].mean() + 1.0
+
+
+def test_parameterised_log_prob():
+    sim = ParameterisedGaussian()
+    x = torch.randn(50, 2)
+    lp = sim.log_prob(x, theta=1.0)
+    assert lp.shape == (50,)
+    assert lp.isfinite().all()
+
+
+def test_parameterised_log_likelihood_ratio():
+    sim = ParameterisedGaussian()
+    x = torch.randn(10, 2)
+    llr = sim.log_likelihood_ratio(x, theta=0.0)
+    assert llr.shape == (10,)
+    assert llr.isfinite().all()
 
 
 def test_shell_generate():
@@ -165,3 +200,23 @@ def test_standardiser_constant_feature():
     s = Standardiser.fit(x)
     z = s.transform(x)
     assert z.isfinite().all()
+
+
+# ------------------------------------------------------------------------
+# rng helpers
+
+
+def test_make_generator_seeded():
+    g1 = make_generator(42)
+    g2 = make_generator(42)
+    assert torch.equal(torch.randn(5, generator=g1), torch.randn(5, generator=g2))
+
+
+def test_make_generator_none():
+    assert make_generator(None) is None
+
+
+def test_make_generator_with_toy():
+    ds1 = TwoMoons().generate(200, generator=make_generator(0))
+    ds2 = TwoMoons().generate(200, generator=make_generator(0))
+    assert torch.equal(ds1.x, ds2.x)
