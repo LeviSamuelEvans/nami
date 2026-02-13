@@ -268,6 +268,8 @@ class DiffusionProcess:
 
 
 def _model_device_dtype(model) -> tuple[torch.device | None, torch.dtype | None]:
+    if not hasattr(model, "parameters"):
+        return None, None
     for p in model.parameters():
         return p.device, p.dtype
     return None, None
