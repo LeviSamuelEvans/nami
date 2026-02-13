@@ -12,12 +12,12 @@ from nami.solvers import RK4, EulerMaruyama, Heun
 def zero_field(x, _t, _c=None):
     return torch.zeros_like(x)
 
+
 def context_field(x, _t, c):
     return torch.zeros_like(x) + c.sum(dim=-1)
 
 
 class TestDiffusionProcesses:
-    
     # ---------------------------------------------------------
     # Diffusion process class tests and its integration with various schedules and solvers
     # initial test to check if instantiation and sampling works correctly
@@ -189,7 +189,7 @@ class TestDiffusionProcesses:
         """Test rsample fails for non-ODE solvers."""
         model = UnconditionalField(zero_field)
         schedule = VPSchedule()
-        solver = EulerMaruyama() 
+        solver = EulerMaruyama()
 
         diffusion = Diffusion(
             model, schedule, solver, parameterization="eps", event_shape=(), t1=1e-3
