@@ -18,3 +18,4 @@ The API pages below are generated with autodoc/autosummary from source modules.
    schedules
    solvers
    misc
+   toys

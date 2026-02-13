@@ -13,4 +13,5 @@ Interactive notebooks demonstrating nami workflows.
    books/experiment/coupling/ot-couplings
    books/experiment/masking/masked-particles
    books/experiment/sbi/on-off-sbi
+   books/toys/nami-toys
 
