@@ -1,0 +1,7 @@
+{
+  "operator_in_dist": 0.38780999183654785,
+  "operator_heldout_ncomp6": 0.4999394416809082,
+  "galerkin_heldout": 0.45840805768966675,
+  "per_task_mlp_heldout": 7.021603584289551,
+  "operator_heldout_same16": 0.4840971827507019
+}
