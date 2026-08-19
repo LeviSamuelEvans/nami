@@ -1,5 +1,11 @@
 """Concrete generator operators.
 
+.. note::
+   "Operator" here means the *infinitesimal generator of a Markov
+   semigroup* (Generator Matching).  Not to be confused with
+   :mod:`nami.fields.green_operator`, where "operator" means the
+   *solution operator of an elliptic problem* (operator learning).
+
 Implements :class:`ItoGeneratorOperator`, a continuous-time
 generator with drift and optional diagonal diffusion. The diffusion
 mode toggles between ODE (``"none"``) and SDE (``"diagonal"``)
