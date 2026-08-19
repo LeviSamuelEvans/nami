@@ -198,36 +198,67 @@ def per_task_ritz_mlp_velocity(x_fit, s_fit, x_eval, steps: int = 800):
 # --------------------------------------------------------------------------
 
 
-def evaluate_operator(operator, tasks, n_context: int, n_eval: int, gen):
+def evaluate_operator(operator, tasks, n_context: int, n_eval: int, gen, *, normalise: bool = False):
     x_ctx = mixture_sample(tasks, n_context, gen)
     s_ctx, _ = source_and_exact_velocity(tasks, x_ctx)
-    context = EmpiricalTangent(points=x_ctx.unsqueeze(-1), source=s_ctx)
+    rms = (
+        s_ctx.square().mean(-1, keepdim=True).sqrt().clamp_min(1e-8)
+        if normalise
+        else torch.ones(s_ctx.shape[0], 1)
+    )
+    context = EmpiricalTangent(points=x_ctx.unsqueeze(-1), source=s_ctx / rms)
     x_eval = mixture_sample(tasks, n_eval, gen)
     _, v_exact = source_and_exact_velocity(tasks, x_eval)
-    v_hat = operator.velocity(
+    v_hat = rms * operator.velocity(
         x_eval.unsqueeze(-1), context, create_graph=False
     ).squeeze(-1)
     return relative_l2_error(v_hat, v_exact), (x_ctx, s_ctx, x_eval, v_exact, v_hat)
 
 
 def main():
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--n-modes", type=int, default=48)
+    ap.add_argument("--density-dim", type=int, default=64)
+    ap.add_argument("--hidden", type=int, default=128)
+    ap.add_argument("--layers", type=int, default=3)
+    ap.add_argument("--n-context", type=int, default=256)
+    ap.add_argument("--n-query", type=int, default=256)
+    ap.add_argument("--batch-tasks", type=int, default=16)
+    ap.add_argument("--steps", type=int, default=3000)
+    ap.add_argument("--lr", type=float, default=1e-3)
+    ap.add_argument("--train-comps", type=int, nargs=2, default=[1, 4])
+    ap.add_argument("--normalise-source", action="store_true")
+    ap.add_argument("--tag", type=str, default="")
+    args = ap.parse_args()
+    suffix = f"_{args.tag}" if args.tag else ""
+
     torch.manual_seed(0)
     gen = torch.Generator().manual_seed(0)
 
-    n_context, n_query = 256, 256
-    batch_tasks, steps = 16, 3000
+    n_context, n_query = args.n_context, args.n_query
+    batch_tasks, steps = args.batch_tasks, args.steps
 
     operator = GreenOperatorPotentialField(
-        1, n_modes=48, density_dim=64, hidden=128, layers=3
+        1,
+        n_modes=args.n_modes,
+        density_dim=args.density_dim,
+        hidden=args.hidden,
+        layers=args.layers,
     )
-    optim = torch.optim.Adam(operator.parameters(), lr=1e-3)
+    optim = torch.optim.Adam(operator.parameters(), lr=args.lr)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=steps)
 
     print(f"training operator: {steps} steps x {batch_tasks} tasks")
     t0 = time.time()
     for step in range(steps):
-        tasks = sample_tasks(batch_tasks, (1, 4), gen)
+        tasks = sample_tasks(batch_tasks, tuple(args.train_comps), gen)
         context, x_qry, s_qry = make_batch(tasks, n_context, n_query, gen)
+        if args.normalise_source:
+            rms = context.source.square().mean(-1, keepdim=True).sqrt().clamp_min(1e-8)
+            context = EmpiricalTangent(context.points, context.source / rms, context.mask)
+            s_qry = s_qry / rms
         optim.zero_grad()
         loss = green_operator_loss(
             operator, context=context, query_x=x_qry, query_source=s_qry
@@ -238,7 +269,7 @@ def main():
         if step % 250 == 0 or step == steps - 1:
             # held-out Ritz monitor (empirical-Ritz guard): fresh tasks, fresh queries
             with torch.enable_grad():
-                mt = sample_tasks(64, (1, 4), gen)
+                mt = sample_tasks(64, tuple(args.train_comps), gen)
                 mc, mx, ms = make_batch(mt, n_context, n_query, gen)
                 monitor = green_operator_loss(
                     operator, context=mc, query_x=mx, query_source=ms,
@@ -254,11 +285,11 @@ def main():
     gen_eval = torch.Generator().manual_seed(999)
 
     tasks_in = sample_tasks(64, (1, 4), gen_eval)
-    err_in, _ = evaluate_operator(operator, tasks_in, n_context, 2048, gen_eval)
+    err_in, _ = evaluate_operator(operator, tasks_in, n_context, 2048, gen_eval, normalise=args.normalise_source)
     results["operator_in_dist"] = err_in.median().item()
 
     tasks_out = sample_tasks(64, (6, 6), gen_eval)
-    err_out, detail = evaluate_operator(operator, tasks_out, n_context, 2048, gen_eval)
+    err_out, detail = evaluate_operator(operator, tasks_out, n_context, 2048, gen_eval, normalise=args.normalise_source)
     results["operator_heldout_ncomp6"] = err_out.median().item()
 
     # baselines on a 16-task subset of the held-out family (cost)
@@ -275,10 +306,16 @@ def main():
     v_mlp = per_task_ritz_mlp_velocity(x_fit, s_fit, x_eval)
     results["per_task_mlp_heldout"] = relative_l2_error(v_mlp, v_exact).median().item()
 
-    sub_ctx = EmpiricalTangent(
-        points=x_fit[:, :n_context].unsqueeze(-1), source=s_fit[:, :n_context]
+    rms16 = (
+        s_fit[:, :n_context].square().mean(-1, keepdim=True).sqrt().clamp_min(1e-8)
+        if args.normalise_source
+        else torch.ones(x_fit.shape[0], 1)
     )
-    v_op = operator.velocity(
+    sub_ctx = EmpiricalTangent(
+        points=x_fit[:, :n_context].unsqueeze(-1),
+        source=s_fit[:, :n_context] / rms16,
+    )
+    v_op = rms16 * operator.velocity(
         x_eval.unsqueeze(-1), sub_ctx, create_graph=False
     ).squeeze(-1)
     results["operator_heldout_same16"] = (
@@ -288,7 +325,7 @@ def main():
     print("\nmedian relative L2(rho) velocity error")
     for k, v in results.items():
         print(f"  {k:28s} {v:.4f}")
-    (HERE / "results.json").write_text(json.dumps(results, indent=2))
+    (HERE / f"results{suffix}.json").write_text(json.dumps(results, indent=2))
 
     # ---------------- overlay plot ----------------
     import matplotlib
@@ -309,8 +346,8 @@ def main():
     axes[0].set_ylabel("velocity")
     axes[0].legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig(HERE / "overlay.png", dpi=150)
-    print(f"\nwrote {HERE / 'results.json'} and {HERE / 'overlay.png'}")
+    fig.savefig(HERE / f"overlay{suffix}.png", dpi=150)
+    print(f"\nwrote results{suffix}.json and overlay{suffix}.png")
 
 
 if __name__ == "__main__":
