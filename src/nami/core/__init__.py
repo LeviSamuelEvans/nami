@@ -7,6 +7,7 @@ library. No dependencies on ML papers — pure plumbing.
 
 from __future__ import annotations
 
+from nami.core.contexts import EmpiricalTangent
 from nami.core.specs import (
     TensorSpec,
     as_tuple,
@@ -18,6 +19,7 @@ from nami.core.specs import (
 )
 
 __all__ = [
+    "EmpiricalTangent",
     "TensorSpec",
     "as_tuple",
     "event_numel",
